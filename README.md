@@ -433,7 +433,7 @@ See [DATA_DICTIONARY.md](02_Banking_Sector_Dashboard/data/DATA_DICTIONARY.md) fo
 Focused on European banking sector analysis, data engineering, and quantitative financial modelling.
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin)](https://linkedin.com/in/spyros-papastergiou)
-[![Email](https://img.shields.io/badge/Email-spyrossyo96%40gmail.com-D14836?logo=gmail)](mailto:spyrossyo96@gmail.com)
+[![Email](https://img.shields.io/badge/Email-spyrossyo96%40gmail.com-D14836?logo=gmail)](mailto:papastergiousp@gmail.com)
 
 ---
 
