@@ -99,7 +99,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .charts-main  {display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;}
 .charts-3     {display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
 .charts-2     {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:border-color 0.2s;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;transition:border-color 0.2s;min-width:0;}
+.header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.table-wrap{overflow-x:auto;}
 .chart-card:hover{border-color:var(--border2);}
 .chart-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:8px;}
 .chart-title{font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;color:var(--text);margin-bottom:2px;}
@@ -168,7 +170,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .checks li::before{content:'';position:absolute;left:0;top:6px;width:6px;height:6px;border-radius:50%;background:var(--up);}
 .src-controls{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
 .src-controls select{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:0.68rem;font-family:'DM Sans',sans-serif;}
-.src-wrap{max-height:300px;overflow-y:auto;}
+.src-wrap{max-height:300px;overflow:auto;}
+.val-grid>*{min-width:0;}
 @media(max-width:900px){.val-grid{grid-template-columns:1fr;}}
 
 /* ── FOOTER ── */
@@ -201,7 +204,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @media(max-width:680px){
   .main{padding:14px 14px 40px;}
   .header{padding:8px 14px;height:auto;flex-wrap:wrap;gap:6px;}
-  .header-right{flex-wrap:wrap;gap:6px;}
+  .header-right{flex-wrap:wrap;gap:6px;flex-shrink:1;min-width:0;width:100%;}
   .brand-sub{display:none;}
   .hero{padding:18px;}
   .hero-title{font-size:1.1rem;}
@@ -219,6 +222,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   .val-section{padding:18px 16px;}
   .sql-strip{display:none;}
   .live-pill span{display:none;}
+  .chart-header{flex-wrap:wrap;}
+  .chart-tag{white-space:normal;}
 }
 @media(max-width:480px){
   .bank-tabs{flex-wrap:wrap;}
@@ -247,7 +252,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
   <div class="header-right">
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div class="header-controls">
       <div class="bank-tabs">
         <button class="bank-tab active" data-bank="Eurobank" style="--bc:#3b82f6" onclick="toggleBank('Eurobank')">Eurobank</button>
         <button class="bank-tab active" data-bank="Alpha Bank" style="--bc:#10b981" onclick="toggleBank('Alpha Bank')">Alpha</button>
@@ -588,10 +593,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="val-grid">
       <div>
         <div class="val-h">What the 2024 returns would justify</div>
-        <table class="val-table">
+        <div class="table-wrap"><table class="val-table">
           <thead><tr><th>Bank</th><th>RoTE 2024</th><th>RoTE − CoE</th><th>Justified P/TBV</th></tr></thead>
           <tbody id="val-tbody"></tbody>
-        </table>
+        </table></div>
         <div class="val-note">
           RoTE = net profit / average tangible equity (equity attributable − AT1 − goodwill and intangibles).
           Justified P/TBV = (RoTE − g) / (CoE − g), with an assumed cost of equity of 10% and growth of 2%
@@ -600,10 +605,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       </div>
       <div>
         <div class="val-h">Official EBA 2023 stress test (fully loaded CET1)</div>
-        <table class="val-table">
+        <div class="table-wrap"><table class="val-table">
           <thead><tr><th>Bank</th><th>Dec 2022</th><th>Adverse 2025</th><th>Depletion</th><th>Source</th></tr></thead>
           <tbody id="eba-tbody"></tbody>
-        </table>
+        </table></div>
         <div class="val-note">Results as published in each bank's FY2023 annual report. The EBA scenario runs three years from a static balance sheet at end-2022.</div>
       </div>
     </div>
@@ -751,22 +756,26 @@ const PREFIXES = ['euro','alpha','pir','nbg'];
 const YEARS    = [2022,2023,2024];
 const COE = 10, GROWTH = 2;           // assumptions for the justified P/TBV
 const PCFG     = { responsive:true, displayModeBar:false };
-const DARK = {
+// Plotly writes back into the layout objects it receives (for example autorange on an axis),
+// so every chart gets fresh layout objects: DARK, DLEG and RATE_NOTES are getters.
+const baseLayout = () => ({
   paper_bgcolor:'transparent', plot_bgcolor:'transparent',
   font:{ family:'DM Sans,sans-serif', color:'#5a6580', size:10.5 },
   margin:{ l:44, r:8, t:8, b:32 },
   xaxis:{ gridcolor:'rgba(255,255,255,0.04)', zeroline:false, showline:false, dtick:1, tickformat:'d' },
   yaxis:{ gridcolor:'rgba(255,255,255,0.04)', zeroline:false, showline:false },
   showlegend:false,
-};
-const DLEG = { ...DARK, showlegend:true, legend:{ orientation:'h', x:0, y:-0.22, font:{ size:9.5, color:'#8892a8' } } };
+});
+Object.defineProperty(window, 'DARK', { get: baseLayout });
+Object.defineProperty(window, 'DLEG', { get: () => ({ ...baseLayout(), showlegend:true,
+  legend:{ orientation:'h', x:0, y:-0.22, font:{ size:9.5, color:'#8892a8' } } }) });
 // ECB deposit facility rate milestones, shown above the yearly charts
-const RATE_NOTES = [
+Object.defineProperty(window, 'RATE_NOTES', { get: () => [
   {x:2022, text:'ECB hikes begin (Jul)'},
   {x:2023, text:'Deposit rate peak 4.00%'},
   {x:2024, text:'ECB cuts begin (Jun)'},
 ].map(a => ({...a, y:1.10, xref:'x', yref:'paper', showarrow:false, xanchor:'center',
-             font:{size:7.5, color:'rgba(255,255,255,0.28)'}}));
+             font:{size:7.5, color:'rgba(255,255,255,0.28)'}})) });
 
 let SQL_DB = null;
 let ALL  = [];   // kpis
@@ -909,10 +918,11 @@ function renderText() {
 
   // Commentary 1: rates and volumes
   const w23 = rateVolume(2023), w24 = rateVolume(2024);
+  const m0 = v => v.toLocaleString('en',{maximumFractionDigits:0});
   set('cm1', `Sector NII rose from €${(n22/1000).toFixed(1)}bn in 2022 to €${(n24/1000).toFixed(1)}bn in 2024 (${sgn(g,0)}%) as the ECB deposit rate averaged ${ECB[2022].avg.toFixed(2)}%, ${ECB[2023].avg.toFixed(2)}% and ${ECB[2024].avg.toFixed(2)}%. ` +
-    `In a rate/volume walk on average assets, the margin explains ${(w23.rate/w23.d*100).toFixed(0)}% of the 2023 increase (€${w23.rate.toFixed(0)}m of €${w23.d.toFixed(0)}m). ` +
-    `In 2024 NII rose €${w24.d.toFixed(0)}m: €${w24.rate.toFixed(0)}m from the margin and €${w24.vol.toFixed(0)}m from balance sheet growth, of which Eurobank €${w24.volBy['Eurobank'].toFixed(0)}m after it consolidated Hellenic Bank. ` +
-    `The deposit rate has been 2.00% since June 2025, so the margin is now a headwind.`);
+    `In a rate/volume walk on average assets, the margin explains ${(w23.rate/w23.d*100).toFixed(0)}% of the 2023 increase (€${m0(w23.rate)}m of €${m0(w23.d)}m). ` +
+    `In 2024 NII rose €${m0(w24.d)}m: €${m0(w24.rate)}m from the margin and €${m0(w24.vol)}m from balance sheet growth, of which Eurobank €${m0(w24.volBy['Eurobank'])}m after it consolidated Hellenic Bank. ` +
+    `The deposit rate fell to 2.00% in June 2025, so the margin is now a headwind.`);
 
   // Commentary 2: cost efficiency
   const ci = [...rowsY(2024)].sort((a,b)=>a.cost_to_income-b.cost_to_income);
@@ -973,7 +983,9 @@ function renderText() {
   set('pipe-tables', `SQLite · ${tables} tables`);
   set('checks', [
     `${SRC.length} numbers in the database each carry their report and PDF page (table <code>sources</code>).`,
-    `Balance sheet identity holds for all 12 bank-years: total assets − liabilities − equity is at most €${maxGap.toFixed(1)}m (rounding in the reports).`,
+    maxGap < 0.05
+      ? `Balance sheet identity holds exactly for all 12 bank-years: total assets = total liabilities + total equity.`
+      : `Balance sheet identity holds for all 12 bank-years: total assets − liabilities − equity is at most €${maxGap.toFixed(1)}m (rounding in the reports).`,
     `40 automated tests (pytest, run on every push) re-derive ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines.`,
     `DTC share of CET1 matches the banks' own disclosures: Alpha ${dtcA.toFixed(1)}% vs 49.2% reported, Eurobank ${dtcE.toFixed(1)}% vs 36% reported (FY2024 reports).`,
     `ECB funding of the four banks: €${(fund(2022)/1000).toFixed(1)}bn at end-2022 and €${(fund(2023)/1000).toFixed(1)}bn at end-2023, against €35.4bn and €14.3bn for the whole Greek banking system (Piraeus FY2023 and FY2024 reports, p.12).`,
@@ -989,7 +1001,8 @@ function initSources() {
 }
 function renderSources() {
   const b = document.getElementById('src-bank').value, y = +document.getElementById('src-year').value;
-  const fmtV = (m,v) => /ratio/.test(m) ? `${(+v).toFixed(2).replace(/0$/,'')}%` : (+v).toLocaleString('en',{maximumFractionDigits:1});
+  const PCT = ['cet1_ratio','total_capital_ratio','npe_ratio'];
+  const fmtV = (m,v) => PCT.includes(m) ? `${(+v).toFixed(2).replace(/0$/,'')}%` : (+v).toLocaleString('en',{maximumFractionDigits:1});
   const label = m => ({cet1_ratio:'CET1 ratio', total_capital_ratio:'Total capital ratio', npe_ratio:'NPE ratio', dtc:'DTC (in regulatory capital)', rwa:'Risk-weighted assets'}[m] || m);
   set('src-tbody', SRC.filter(r=>r.bank===b && r.year===y).map(r =>
     `<tr><td>${label(r.metric)}</td><td style="font-family:'DM Mono',monospace;">${fmtV(r.metric, r.value)}</td>
@@ -1012,14 +1025,15 @@ function renderStatic() {
   document.getElementById('total-tag').textContent = `€${(tot/1000).toFixed(0)}bn total`;
   Plotly.newPlot('chart-share',[{
     values:sh.map(r=>r.total_assets), labels:sh.map(r=>r.bank), type:'pie', hole:0.58,
+    domain:{x:[0,0.56], y:[0,1]},
     marker:{colors:sh.map(r=>bankColor(r.bank))}, textinfo:'none', sort:false,
     hovertemplate:'<b>%{label}</b><br>€%{value:,.0f}m · %{percent}<extra></extra>'
   }],{
     ...DARK, margin:{l:10,r:10,t:8,b:10}, showlegend:true,
-    legend:{font:{size:10,color:'#8892a8'},x:0.6,y:0.5,xanchor:'left',yanchor:'middle'},
+    legend:{font:{size:10,color:'#8892a8'},x:0.62,y:0.5,xanchor:'left',yanchor:'middle'},
     annotations:[
-      {text:`€${(tot/1000).toFixed(0)}bn`,x:0.36,y:0.54,font:{size:14,color:'#e8edf5',family:'DM Mono'},showarrow:false,xanchor:'center'},
-      {text:'Total Assets',x:0.36,y:0.42,font:{size:9,color:'#5a6580'},showarrow:false,xanchor:'center'}
+      {text:`€${(tot/1000).toFixed(0)}bn`,x:0.28,y:0.54,xref:'paper',yref:'paper',font:{size:14,color:'#e8edf5',family:'DM Mono'},showarrow:false,xanchor:'center'},
+      {text:'Total Assets',x:0.28,y:0.43,xref:'paper',yref:'paper',font:{size:9,color:'#5a6580'},showarrow:false,xanchor:'center'}
     ]
   }, PCFG);
 
@@ -1135,10 +1149,8 @@ function renderStatic() {
   const hmAllData = runQuery('SELECT bank, year, roe, nim, cost_to_income, cet1, npe_ratio FROM kpis ORDER BY bank, year');
   const hmCols = [];
   ACTIVE_BANKS.forEach(b => YEARS.forEach(y => { if(hmAllData.some(r=>r.bank===b&&r.year===y)) hmCols.push([b,y]); }));
-  const hmXlabels = hmCols.map(([b,y],i) => {
-    const prev = i > 0 ? hmCols[i-1][0] : null;
-    return (b !== prev ? short(b) + ' ' : '') + "'" + String(y).slice(2);
-  });
+  // Every label must be unique, or the category axis merges columns
+  const hmXlabels = hmCols.map(([b,y]) => `${short(b)} '${String(y).slice(2)}`);
   const hmMetrics = ['ROE (%)', 'NIM (%)', 'C/I (%)', 'CET1 (%)', 'NPE (%)'];
   const hmDirs    = [1, 1, -1, 1, -1];
   const hmKeys    = ['roe', 'nim', 'cost_to_income', 'cet1', 'npe_ratio'];
