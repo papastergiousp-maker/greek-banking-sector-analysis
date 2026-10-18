@@ -1,6 +1,7 @@
 -- 06_income_decomposition.sql
--- Break operating income into NII vs non-NII (fees + trading) for each bank-year,
--- then compute NII mix % and rank banks by NII dependency in 2024.
+-- Break operating income into NII vs non-NII for each bank-year, where non-NII is
+-- operating income minus NII (fees, trading and other income). Then compute NII mix %
+-- and rank banks by NII dependency in each year.
 -- Joins kpis (NII) against income_statement (operating income line) to avoid
 -- double-counting; shows multi-CTE pipeline and cross-table JOIN.
 -- Shows: multi-CTE, JOIN across two tables, window function on CTE result.
@@ -12,7 +13,7 @@ WITH nii_base AS (
 opincome_base AS (
     SELECT bank, year, value AS operating_income
     FROM income_statement
-    WHERE metric = 'Operating Income'
+    WHERE metric = 'Operating income'
 ),
 decomposed AS (
     SELECT
@@ -36,4 +37,5 @@ SELECT
 FROM decomposed
 ORDER BY year, nii_dependency_rank;
 
--- High NII mix (>75 %) = more rate-sensitive; diversified banks (lower mix) more resilient to cuts
+-- A higher NII share means income depends more on the interest margin, so it moves more
+-- with interest rates. In 2024 the NII share ranges from 74.0% (Alpha) to 81.7% (NBG).

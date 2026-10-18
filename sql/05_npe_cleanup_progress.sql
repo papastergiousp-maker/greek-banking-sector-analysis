@@ -1,7 +1,7 @@
 -- 05_npe_cleanup_progress.sql
 -- Measure each bank's NPE ratio improvement from 2022 to 2024 using
 -- conditional aggregation (no self-join needed).
--- Shows: SUM(CASE WHEN), conditional aggregation, ROUND, ORDER BY expression.
+-- Shows: SUM(CASE WHEN), conditional aggregation, ROUND, ORDER BY alias.
 
 SELECT
     bank,

@@ -17,4 +17,4 @@ SELECT
 FROM kpis
 ORDER BY bank, year;
 
--- Expected (2024 vs 2022 for Eurobank): nii grows from ~1 390 to ~2 160 → +55 %
+-- Eurobank: NII 1,480 (2022), 2,174 (2023, +46.9%), 2,507 (2024, +15.3%).

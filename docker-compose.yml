@@ -3,7 +3,4 @@ services:
     build: .
     ports:
       - "8501:8501"
-    volumes:
-      # Mount processed CSVs so local data corrections are picked up
-      - ./02_Banking_Sector_Dashboard/data/processed:/app/02_Banking_Sector_Dashboard/data/processed:ro
     restart: unless-stopped

@@ -1,6 +1,6 @@
 -- 03_peer_ranking.sql
--- Rank all four banks on six KPIs for 2024; compute a composite Z-score ranking.
--- Shows: RANK(), DENSE_RANK(), multiple window partitions, CTE chaining, CASE WHEN.
+-- Rank all four banks on six KPIs for 2024; compute a composite rank (the average of six RANK() values).
+-- Shows: RANK(), DENSE_RANK(), CTE chaining.
 
 WITH raw AS (
     SELECT bank, roe, nim, cost_to_income, cet1, npe_ratio, roa
@@ -35,4 +35,5 @@ SELECT
 FROM ranked
 ORDER BY overall_rank;
 
--- Eurobank expected to lead; Piraeus scores well on efficiency but lags on CET1
+-- Result for 2024: NBG first (average rank 1.67), Eurobank second (1.83), Piraeus third (2.50),
+-- Alpha fourth (3.83). Piraeus has the lowest cost-to-income ratio but the lowest CET1 ratio.

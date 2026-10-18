@@ -2,25 +2,27 @@ cff-version: 1.2.0
 message: "If you use this analysis or methodology, please cite it as below."
 type: software
 title: "Greek Banking Sector Analysis 2022–2024"
+version: "2.0.0"
 abstract: >
-  Investment-grade financial analysis of the four Greek systemic banks
-  (Eurobank, Alpha Bank, Piraeus Bank, NBG) for fiscal years 2022–2024.
-  Built entirely from official annual report PDFs using Python, pandas,
-  SQLite, Plotly, and Streamlit. Includes 5-step DuPont decomposition,
-  CAMELS scoring, peer benchmarking, NII forecasting, EBA-style stress
-  testing, and Gordon Growth valuation.
+  Financial analysis of the four listed Greek banking groups (Alpha Services
+  and Holdings, Eurobank Ergasias Services and Holdings, National Bank of
+  Greece, Piraeus Financial Holdings) for fiscal years 2022-2024, built from
+  their annual reports with Python, pandas, SQLite, Plotly and Streamlit. Every
+  number is traced to a report page. Includes 5-step DuPont decomposition, a
+  CAMELS-style scorecard, peer benchmarking, NII scenarios, a one-year stress
+  test and a justified P/TBV model.
 authors:
   - family-names: Papastergiou
     given-names: Spyros
-    email: spyrossyo96@gmail.com
+    email: papastergiousp@gmail.com
 repository-code: "https://github.com/papastergiousp-maker/greek-banking-sector-analysis"
 url: "https://greek-banking-sector-analysis.streamlit.app/"
 license: MIT
-date-released: "2024-12-31"
+date-released: "2026-10-18"
 keywords:
   - banking
   - financial analysis
-  - equity research
+  - data pipeline
   - Greek banks
   - DuPont
   - CAMELS

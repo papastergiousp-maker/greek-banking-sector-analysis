@@ -146,7 +146,35 @@ The processed CSVs and the database are in the repo, so the analysis runs withou
 
 ## Project 1: Eurobank single-bank pipeline (Power BI)
 
-<!-- PROJECT1 -->
+A first, single-bank version of the pipeline: Eurobank's statements extracted from its annual reports, loaded into SQLite, KPIs in SQL and a Power BI dashboard with DAX measures.
+
+**Entity and basis.** Eurobank S.A., the bank (consolidated statements), as first published in each year's annual report. The bank is wholly owned by the listed Eurobank Ergasias Services and Holdings, which Project 2 uses with restated figures, so the two projects differ slightly (for example, 2024 net profit is €1,458m here and €1,448m in Project 2).
+
+| Step | Tool | What it does |
+|:-----|:-----|:-------------|
+| 1. Extract | Python, pdfplumber | Income statement and balance sheet lines from the annual report PDFs |
+| 2. Clean | pandas | Wide and long tables in € million |
+| 3. Load | SQLite | `01_eurobank_pipeline/data/eurobank.db` |
+| 4. Query | SQL | KPIs with joins and window functions |
+| 5. Visualise | Power BI, DAX | Dashboard with slicers and DAX measures |
+
+| KPI | 2022 | 2023 | 2024 |
+|:----|-----:|-----:|-----:|
+| Net interest income | €1,551m | €2,174m | €2,504m |
+| Operating income | €3,135m | €2,914m | €3,339m |
+| Net profit attributable to shareholders | €1,336m | €1,148m | €1,458m |
+| Cost-to-income | 29.0% | 31.1% | 32.6% |
+| Loan-to-deposit | 72.7% | 71.9% | 64.6% |
+| ROE (on year-end equity) | 20.1% | 15.2% | 16.9% |
+
+Source pages (consolidated statements of Eurobank S.A.): FY2022 report p.37–38, FY2023 report p.40–41, FY2024 report p.179–180.
+
+**What the numbers say**
+- NII rose 61% from 2022 to 2024 as rates went up. The 2022 figure as first published still includes the Serbian subsidiary that the 2023 report shows as discontinued.
+- 2022 operating income was lifted by €727m of trading income, mostly €550m of gains from unwinding interest rate swaps, and by a €325m gain on the sale of the merchant acquiring business. That is why the 2022 cost-to-income ratio (29.0%) is lower than in 2023 and 2024.
+- Net profit rose 27% in 2024. Part of the rise is that 2023 included a €153m loss from discontinued operations.
+
+Dashboard exports: `01_eurobank_pipeline/powerbi/` (being updated to the figures above).
 
 ---
 

@@ -1,0 +1,10 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ipynb_checkpoints
+02_Banking_Sector_Dashboard/data/raw
+_scripts
+coverage.xml
+.coverage
