@@ -122,7 +122,7 @@ Averages are (opening + closing) / 2. Ratios are in %.
 ## Comparability notes
 
 - **Eurobank 2024** includes Hellenic Bank (Cyprus), consolidated from 30 June 2024. It added €15.8bn of deposits and €295m of 2024 NII (Eurobank FY2024 report, p.4 and p.262).
-- **CET1 ratios** include year-end profit net of the dividend accrual each bank applies. NBG's 18.3% includes a 50% payout accrual (FY2024 report p.40); its statutory note shows 18.0% with the accrual approved by the ECB (p.445).
+- **CET1 ratios** are as reported, and the banks treat FY2024 profit and dividends differently. NBG's 18.3% includes FY2024 profit with a 50% payout accrual (FY2024 report p.40); its statutory note shows 18.0% with the accrual approved by the ECB (p.445). Alpha's 16.3% includes profit after the dividend provision (p.387). Piraeus' 14.47% includes FY2024 profit (p.566). Eurobank's 16.8% is before the accrual for its FY2024 dividend; pro forma for that accrual and for projects Solar, Leon and Wave VI it is 15.7% (p.6).
 - **Piraeus DTC 2024** is the amount included in regulatory capital: €3,248m eligible DTAs less a €128m prudential amortisation adjustment (FY2024 report p.567–568).
 - **NPE ratios** follow each bank's own definition.
 - **Operating income and expenses** follow each bank's own presentation, so cost-to-income ratios are close but not perfectly comparable.

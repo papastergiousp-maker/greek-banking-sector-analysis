@@ -448,7 +448,7 @@ SUMMARY = [
     ("CET1 ratio (%)", "cet1", F_P1, "high", False),
     ("Total capital ratio (%)", "total_capital_ratio", F_P1, "high", False),
     ("NPE ratio (%)", "npe_ratio", F_P1, "low", False),
-    ("DTC (€m)", "dtc", F_INT, "low", True),
+    ("DTC (€m)", "dtc", F_INT, None, True),
     ("DTC share of CET1 (%)", "dtc_to_cet1", F_P1, "low", False),
 ]
 
@@ -530,7 +530,8 @@ def make_sector_summary():
 
     row += 1
     note_row(ws, row, "Green = best of the four banks in 2024 (highest, or lowest for cost-to-income, cost of risk, "
-                      "NPE ratio, DTC and DTC share of CET1). Size items and the loan-to-deposit ratio are not ranked. "
+                      "NPE ratio and DTC share of CET1). Amounts that depend on size (loans, deposits, total assets, "
+                      "equity, DTC) and the loan-to-deposit ratio are not ranked. "
                       "Sector columns show the sum of the four banks for amounts only.", last_col, 190)
     note_row(ws, row + 1, "Eurobank 2024 includes Hellenic Bank, consolidated from 30 June 2024. Source: kpis_final.csv; "
                           "report and page of each figure on the bank sheets and in sources.csv.", last_col, 190)
@@ -900,13 +901,15 @@ def make_assumptions():
             ["Automated tests", "tests/test_kpis.py recomputes the ratios from the statement lines and checks that assets equal liabilities plus equity"],
             ["Traceability", "sources.csv lists the report file and PDF page of every figure"],
             ["Operating income and expenses", "Each bank's own presentation, so cost-to-income ratios are close but not perfectly comparable"],
-            ["CET1 ratios", "Include year-end profit net of the dividend accrual that each bank applies, so they are not perfectly comparable"],
+            ["CET1 ratios", "As reported. NBG, Alpha and Piraeus include FY2024 profit (NBG and Alpha after a dividend provision); Eurobank's 16.8% is before its FY2024 dividend accrual (15.7% pro forma), so they are not perfectly comparable"],
             ["Data frequency", "Yearly only, so intra-year effects cannot be measured"],
         ]),
     ]
 
     row = 3
     for title, kind, headers, rows in blocks:
+        if title.startswith("NII SCENARIOS"):
+            ws.row_breaks.append(Break(id=row - 1))      # keep each table whole when printed
         section_bar(ws, row, title, last_col)
         row += 1
         ws.row_dimensions[row].height = 16

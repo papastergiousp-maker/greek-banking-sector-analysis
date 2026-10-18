@@ -1,703 +1,1181 @@
 """
-_build_pptx.py — generates greek_banking_deck.pptx (12 slides, board-ready)
-Run: python deliverables/_build_pptx.py
+_build_pptx.py builds greek_banking_deck.pptx (12 slides).
+
+Every figure is read with pandas from
+02_Banking_Sector_Dashboard/data/processed/kpis_final.csv (one row per bank and year).
+The report and PDF page of each figure are listed in sources.csv in the same folder.
+
+A few results cannot be recomputed from that file (EBA 2023 stress test, ECB funding,
+2022 underlying profit). They are typed in VERIFIED below, next to the 2026 NII base case
+and the CAMELS-style composite. Every result that can be recomputed is checked against
+VERIFIED before the deck is written, so the build stops if the data and the verified
+values disagree. The analysis block is the same as in _build_excel.py.
+
+Run from the deliverables folder:   python3 _build_pptx.py
 """
-import sys, io, sqlite3
-import pandas as pd
+import io
+import sys
+from datetime import datetime
+from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
+
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.gridspec import GridSpec
 import numpy as np
-from pathlib import Path
+import pandas as pd
+from lxml import etree
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+from matplotlib.ticker import FuncFormatter
+from PIL import Image
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.text import MSO_ANCHOR, MSO_AUTO_SIZE, PP_ALIGN
+from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parent.parent
-DB   = ROOT / "02_Banking_Sector_Dashboard" / "data" / "greek_banking_final.db"
-OUT  = Path(__file__).parent / "greek_banking_deck.pptx"
-
-# ── Data ──────────────────────────────────────────────────────────────────────
-con  = sqlite3.connect(DB)
-kpis = pd.read_sql("SELECT * FROM kpis ORDER BY bank, year", con)
-con.close()
+PROCESSED = ROOT / "02_Banking_Sector_Dashboard" / "data" / "processed"
+KPIS_CSV = PROCESSED / "kpis_final.csv"
+ECB_RATES_CSV = ROOT / "02_Banking_Sector_Dashboard" / "data" / "manual" / "ecb_deposit_rate.csv"
+OUT = Path(__file__).resolve().parent / "greek_banking_deck.pptx"
 
 BANKS = ["Eurobank", "Alpha Bank", "Piraeus Bank", "NBG"]
 YEARS = [2022, 2023, 2024]
+N_SLIDES = 12
 
-BCOLORS = {
-    "Eurobank":     (0,   103, 177),
-    "Alpha Bank":   (226,  35,  26),
-    "Piraeus Bank": (247, 166,   0),
-    "NBG":          (  0,  48, 135),
-}
-BCOLORS_HEX = {
-    "Eurobank":     RGBColor(0,   103, 177),
-    "Alpha Bank":   RGBColor(226,  35,  26),
-    "Piraeus Bank": RGBColor(247, 166,   0),
-    "NBG":          RGBColor(  0,  48, 135),
+ENTITIES = {
+    "Alpha Bank": "Alpha Services and Holdings S.A.",
+    "Eurobank": "Eurobank Ergasias Services and Holdings S.A.",
+    "NBG": "National Bank of Greece S.A.",
+    "Piraeus Bank": "Piraeus Financial Holdings S.A.",
 }
 
-NAVY  = RGBColor(10,  22,  40)
-WHITE = RGBColor(255,255,255)
-LGREY = RGBColor(148,163,184)
-DGREY = RGBColor(30, 41, 59)
-GREEN = RGBColor(16, 163, 127)
+CONTACT_EMAIL = "papastergiousp@gmail.com"
+CONTACT_GITHUB = "github.com/papastergiousp-maker/greek-banking-sector-analysis"
+CONTACT_DASHBOARD = "phytai.com/dashboard"
+NOT_ADVICE = "Not investment advice."
+
+# Stated assumptions
+COE = 10.0   # cost of equity, %
+G = 2.0      # long-run growth, %
+STRESS = {"cor_bp": 200, "loans": -0.15, "nim_bp": -50, "tax": 0.29}
+
+# ---------------------------------------------------------------------------
+# Verified results (typed values only for what kpis_final.csv cannot give)
+# ---------------------------------------------------------------------------
+VERIFIED = {
+    "sector_nii": {2022: 5376, 2023: 8099, 2024: 8596},
+    "sector_nii_growth_pct": 59.9,
+    "sector_net_profit": {2022: 3785, 2023: 3652, 2024: 4326},
+    "walk_2023": {"delta": 2723, "rate": 2891},
+    "walk_2024": {"delta": 497, "rate": 270, "volume": 225},
+    "eurobank_volume_2024": 265,
+    "sector_underlying_2022": 2577,          # not recomputable from the CSV
+    "reported_change_2023_pct": -3.5,
+    "underlying_change_2023_pct": 42,        # "about 42%"
+    # net profit (EUR m), CET1 end-2024, CET1 end of stress year, extra cost of risk (bp)
+    "stress": {
+        "NBG": (371, 18.3, 19.3, 420),
+        "Eurobank": (402, 16.8, 17.6, 367),
+        "Piraeus Bank": (217, 14.5, 15.1, 353),
+        "Alpha Bank": (-118, 16.3, 15.9, 209),
+    },
+    # official EBA 2023 stress test, fully loaded CET1 (%): Dec 2022, adverse end-2025
+    "eba_2023": {
+        "Alpha Bank": (11.9, 8.9),
+        "Eurobank": (14.4, 12.2),
+        "NBG": (15.9, 14.5),
+        "Piraeus Bank": (11.5, 9.1),
+    },
+    "nii_2026_base": {"Eurobank": 2430, "Alpha Bank": 1434, "Piraeus Bank": 1828, "NBG": 1902},
+    "sector_nii_2026_base": 7593,
+    "sector_nii_2026_vs_2024_pct": -11.7,
+    "dtc_total_bn": {2022: 13.5, 2024: 12.0},
+    "dtc_to_cet1_2024": {"Eurobank": 36, "Piraeus Bank": 63},
+    "ecb_funding_bn": {2022: 35.1, 2023: 14.3, 2024: 2.6},   # all Alpha in 2024
+    "camels_2024": {"Eurobank": 1.8, "NBG": 1.8, "Piraeus Bank": 2.2, "Alpha Bank": 3.0},
+}
+
+# ---------------------------------------------------------------------------
+# Data and analysis (the same block is used in _build_excel.py)
+# ---------------------------------------------------------------------------
+kpis = pd.read_csv(KPIS_CSV).sort_values(["bank", "year"]).reset_index(drop=True)
+assert len(kpis) == len(BANKS) * len(YEARS), "kpis_final.csv must have one row per bank and year"
+assert set(kpis.bank) == set(BANKS) and set(kpis.year) == set(YEARS)
+
+k24 = kpis[kpis.year == 2024].set_index("bank").loc[BANKS]
+k23 = kpis[kpis.year == 2023].set_index("bank").loc[BANKS]
+k22 = kpis[kpis.year == 2022].set_index("bank").loc[BANKS]
+sector = kpis.groupby("year")[["nii", "operating_income", "net_profit", "loans", "deposits",
+                               "total_assets", "equity", "dtc"]].sum()
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def rgb(r, g, b):
-    return RGBColor(r, g, b)
+def rate_volume_walk(df):
+    """Change in NII split into rate (margin), volume and mix, per bank and year."""
+    rows = []
+    for bank in BANKS:
+        b = df[df.bank == bank].set_index("year")
+        nim = b["nii"] / b["avg_total_assets"]          # unrounded NIM, so the walk adds up
+        for yr in (2023, 2024):
+            p = yr - 1
+            d_nim = nim[yr] - nim[p]
+            d_a = b.loc[yr, "avg_total_assets"] - b.loc[p, "avg_total_assets"]
+            rows.append({
+                "bank": bank, "year": yr,
+                "delta": b.loc[yr, "nii"] - b.loc[p, "nii"],
+                "rate": d_nim * b.loc[p, "avg_total_assets"],
+                "volume": nim[p] * d_a,
+                "mix": d_nim * d_a,
+            })
+    w = pd.DataFrame(rows)
+    assert ((w.rate + w.volume + w.mix) - w.delta).abs().max() < 0.5
+    return w
 
-def hex2rgb(h):
-    h = h.lstrip("#")
-    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
-def fig_to_stream(fig, dpi=150):
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight",
-                facecolor=fig.get_facecolor())
-    buf.seek(0)
-    plt.close(fig)
-    return buf
+def stress_test(df24):
+    """One-year stress on FY2024: +200bp cost of risk, -15% loans, -50bp NIM."""
+    rows = {}
+    for bank in BANKS:
+        r = df24.loc[bank]
+        nim = r["nii"] / r["avg_total_assets"]
+        cor = -r["impairment"] / r["avg_loans"]
+        cet1_capital = r["cet1"] / 100 * r["rwa"]
+        loans_adv = r["loans"] * (1 + STRESS["loans"])
+        assets_adv = r["avg_total_assets"] + r["loans"] * STRESS["loans"]
+        nii_adv = (nim + STRESS["nim_bp"] / 10_000) * assets_adv
+        imp_adv = (cor + STRESS["cor_bp"] / 10_000) * loans_adv
+        pbt_adv = r["pbt"] + (nii_adv - r["nii"]) - (imp_adv + r["impairment"])
+        np_adv = r["net_profit"] + (pbt_adv - r["pbt"]) * (1 - STRESS["tax"])
+        rows[bank] = {
+            "net_profit": r["net_profit"], "net_profit_stress": np_adv,
+            "cet1_start": r["cet1"], "cet1_end": (cet1_capital + np_adv) / r["rwa"] * 100,
+            "absorb_bp": r["pbt"] / r["loans"] * 10_000,
+        }
+    return pd.DataFrame(rows).T.loc[BANKS]
+
+
+def justified_ptbv(rote):
+    return (rote - G) / (COE - G)
+
+
+# Cut-offs of the CAMELS-style score (1 = best, 5 = worst): the project's own, not a supervisory method
+CAMELS_CUTS = {
+    "cet1": ([11.0, 13.0, 15.0, 18.0], "higher"),
+    "npe_ratio": ([2.0, 3.0, 5.0, 8.0], "lower"),
+    "cost_to_income": ([30.0, 37.0, 45.0, 55.0], "lower"),
+    "roe": ([5.0, 8.0, 12.0, 15.0], "higher"),
+    "loan_to_deposit": ([60.0, 65.0, 75.0, 85.0], "lower"),
+}
+
+
+def camels_score(value, cuts, direction):
+    t = sorted(cuts)
+    if direction == "higher":
+        return 1 + sum(value < x for x in reversed(t))
+    return 1 + sum(value > x for x in t)
+
+
+def camels_composite(df24):
+    cols = {m: [camels_score(df24.loc[b, m], *CAMELS_CUTS[m]) for b in BANKS] for m in CAMELS_CUTS}
+    return pd.Series(pd.DataFrame(cols, index=BANKS).mean(axis=1).round(1), index=BANKS)
+
+
+def nii_2026_base_case():
+    """NII 2026 = NIM x average assets. NIM = 2024 NIM + slope x (2026 rate - 2024 rate), the slope being
+    the bank's 2022-2024 regression of NIM on the yearly average ECB deposit rate. Assets grow 2% a year
+    from end-2024. Used only to check the typed base case values."""
+    ecb = pd.read_csv(ECB_RATES_CSV).set_index("year")["dfr_avg"]
+    out = {}
+    for bank in BANKS:
+        b = kpis[kpis.bank == bank].sort_values("year")
+        slope = np.polyfit([ecb[y] for y in YEARS], b["nim"].tolist(), 1)[0]
+        nim26 = b["nim"].iloc[-1] + slope * (2.00 - ecb[2024])
+        assets26 = b["total_assets"].iloc[-1] * 1.02 * 1.01
+        out[bank] = nim26 / 100 * assets26
+    return pd.Series(out)
+
+
+walk = rate_volume_walk(kpis)
+stress = stress_test(k24)
+walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix"]].sum()
+nii_growth = (sector.loc[2024, "nii"] / sector.loc[2022, "nii"] - 1) * 100
+np_2023_reported = (sector.loc[2023, "net_profit"] / sector.loc[2022, "net_profit"] - 1) * 100
+np_2023_underlying = (sector.loc[2023, "net_profit"] / VERIFIED["sector_underlying_2022"] - 1) * 100
+composite = camels_composite(k24)
+
+
+def verify_results():
+    """Stop the build if a recomputed result differs from the verified value."""
+    V = VERIFIED
+    for y in YEARS:
+        assert round(sector.loc[y, "nii"]) == V["sector_nii"][y], f"sector NII {y}"
+        assert round(sector.loc[y, "net_profit"]) == V["sector_net_profit"][y], f"sector profit {y}"
+    assert round(nii_growth, 1) == V["sector_nii_growth_pct"]
+    assert round(walk_sector.loc[2023, "delta"]) == V["walk_2023"]["delta"]
+    assert round(walk_sector.loc[2023, "rate"]) == V["walk_2023"]["rate"]
+    assert round(walk_sector.loc[2024, "delta"]) == V["walk_2024"]["delta"]
+    assert round(walk_sector.loc[2024, "rate"]) == V["walk_2024"]["rate"]
+    assert round(walk_sector.loc[2024, "volume"]) == V["walk_2024"]["volume"]
+    eb = walk[(walk.bank == "Eurobank") & (walk.year == 2024)].iloc[0]
+    assert round(eb["volume"]) == V["eurobank_volume_2024"]
+    assert round(np_2023_reported, 1) == V["reported_change_2023_pct"]
+    assert round(np_2023_underlying) == V["underlying_change_2023_pct"]
+    for bank, (np_s, c0, c1, bp) in V["stress"].items():
+        r = stress.loc[bank]
+        assert round(r["net_profit_stress"]) == np_s, f"stress profit {bank}"
+        assert round(r["cet1_start"], 1) == c0, f"stress CET1 start {bank}"
+        assert round(r["cet1_end"], 1) == c1, f"stress CET1 end {bank}"
+        assert round(r["absorb_bp"]) == bp, f"stress absorb {bank}"
+    for y, v in V["dtc_total_bn"].items():
+        assert round(sector.loc[y, "dtc"] / 1000, 1) == v, f"DTC total {y}"
+    for bank, v in V["dtc_to_cet1_2024"].items():
+        assert round(k24.loc[bank, "dtc_to_cet1"]) == v, f"DTC share {bank}"
+    assert sum(V["nii_2026_base"].values()) - V["sector_nii_2026_base"] in (0, 1)   # rounding
+    assert round((V["sector_nii_2026_base"] / sector.loc[2024, "nii"] - 1) * 100, 1) \
+        == V["sector_nii_2026_vs_2024_pct"]
+    base_check = nii_2026_base_case()
+    for bank, v in V["nii_2026_base"].items():
+        assert abs(base_check[bank] - v) <= 0.6, f"NII 2026 base {bank}"
+    assert abs(base_check.sum() - V["sector_nii_2026_base"]) <= 0.6
+    for bank, v in V["camels_2024"].items():
+        assert abs(composite[bank] - v) < 1e-9, f"CAMELS composite {bank}"
+
+
+verify_results()
+
+
+# ---------------------------------------------------------------------------
+# Claims in the text are checked against the data before they are written
+# ---------------------------------------------------------------------------
+def best_banks(df, metric, high=True):
+    s = df[metric]
+    target = s.max() if high else s.min()
+    return [b for b in s.index if s[b] == target]
+
+
+def is_best(metric, bank, high=True, df=k24):
+    return bank in best_banks(df, metric, high)
+
+
+def num(x, decimals=0):
+    """Number as text, rounded half up like Excel (8,024.5 becomes 8,025)."""
+    d = Decimal(str(float(x))).quantize(Decimal(1).scaleb(-decimals), rounding=ROUND_HALF_UP)
+    return f"{d:,.{decimals}f}"
+
+
+def eur(x, decimals=0):
+    """EUR million as text, with a plain minus for negatives."""
+    s = f"€{num(abs(x), decimals)}m"
+    return f"-{s}" if x < 0 else s
+
+
+def pct1(x):
+    return f"{num(x, 1)}%"
+
+
+eba_change = {b: VERIFIED["eba_2023"][b][1] - VERIFIED["eba_2023"][b][0] for b in BANKS}
+nii_2026_change = {b: VERIFIED["nii_2026_base"][b] / k24.loc[b, "nii"] - 1 for b in BANKS}
+ECB_FUNDING = VERIFIED["ecb_funding_bn"]
+
+# ---------------------------------------------------------------------------
+# Theme (dark navy, like the Streamlit app and the dashboard)
+# ---------------------------------------------------------------------------
+BG = RGBColor(10, 22, 40)
+PANEL = RGBColor(30, 41, 59)
+PANEL_DARK = RGBColor(15, 30, 50)
+TEXT = RGBColor(241, 245, 249)
+MUTED = RGBColor(166, 178, 196)
+GOOD = RGBColor(74, 222, 128)
+BAD = RGBColor(248, 113, 113)
+
+# Brand colours for header bars. On the dark background the charts use lighter display colours
+# (the NBG brand navy would almost disappear).
+BRAND = {"Eurobank": (0, 103, 177), "Alpha Bank": (226, 35, 26), "Piraeus Bank": (247, 166, 0), "NBG": (0, 48, 135)}
+DISPLAY = {"Eurobank": (46, 144, 232), "Alpha Bank": (240, 84, 72), "Piraeus Bank": (247, 166, 0),
+           "NBG": (150, 160, 255)}
+
+
+def rgb(t):
+    return RGBColor(*t)
+
+
+def hexc(t):
+    return "#%02x%02x%02x" % tuple(t)
+
+
+def mpl(t):
+    return tuple(c / 255 for c in t)
+
 
 MPL_THEME = {
     "figure.facecolor": "#0a1628",
-    "axes.facecolor":   "#0f1e30",
-    "axes.edgecolor":   "#1e293b",
-    "axes.labelcolor":  "#94a3b8",
-    "axes.titlecolor":  "#f1f5f9",
-    "xtick.color":      "#64748b",
-    "ytick.color":      "#64748b",
-    "text.color":       "#94a3b8",
-    "grid.color":       "#1e293b",
-    "grid.alpha":       1.0,
-    "lines.linewidth":  2.0,
-    "font.family":      "sans-serif",
-    "font.size":        9,
+    "axes.facecolor": "#0f1e30",
+    "axes.edgecolor": "#334155",
+    "axes.labelcolor": "#cbd5e1",
+    "axes.titlecolor": "#f1f5f9",
+    "axes.titlesize": 12,
+    "axes.titleweight": "bold",
+    "axes.unicode_minus": False,
+    "xtick.color": "#cbd5e1",
+    "ytick.color": "#cbd5e1",
+    "text.color": "#e2e8f0",
+    "grid.color": "#1e293b",
+    "grid.alpha": 1.0,
+    "lines.linewidth": 2.4,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Carlito", "Calibri", "DejaVu Sans"],
+    "font.size": 12,
+    "legend.frameon": False,
+    "legend.fontsize": 11,
 }
-
-def mpl_context():
-    return plt.rc_context(MPL_THEME)
-
-def bank_color_mpl(bank):
-    r, g, b = BCOLORS[bank]
-    return (r/255, g/255, b/255)
+LABEL = "#f1f5f9"
 
 
-# ── Presentation setup ────────────────────────────────────────────────────────
+plt.rcParams.update(MPL_THEME)
+
+
+def new_fig(*args, **kwargs):
+    return plt.subplots(*args, **kwargs)
+
+
+def style_axes(ax, grid_axis="y"):
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    ax.grid(axis=grid_axis, alpha=0.6, linewidth=0.8)
+    ax.set_axisbelow(True)
+    ax.tick_params(length=0)
+
+
+def euro_axis(ax):
+    """Show euro amounts on the y axis with a thousands separator, like the labels on the bars."""
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:,.0f}"))
+
+
+# ---------------------------------------------------------------------------
+# Presentation helpers
+# ---------------------------------------------------------------------------
 prs = Presentation()
-prs.slide_width  = Inches(13.33)
+prs.slide_width = Inches(13.333)
 prs.slide_height = Inches(7.5)
-blank_layout = prs.slide_layouts[6]   # completely blank
+TITLE_ONLY = prs.slide_layouts[5]
+_slide_no = [0]
 
-# ── Slide factory helpers ──────────────────────────────────────────────────────
-def add_slide():
-    sl = prs.slides.add_slide(blank_layout)
-    # Dark background
-    bg = sl.background
-    fill = bg.fill
-    fill.solid()
-    fill.fore_color.rgb = NAVY
-    return sl
 
-def add_rect(sl, x, y, w, h, color):
+def _to_back(slide, shape):
+    tree = slide.shapes._spTree
+    tree.remove(shape._element)
+    tree.insert(2, shape._element)
+
+
+def add_rect(sl, x, y, w, h, color, name="Panel"):
     shape = sl.shapes.add_shape(1, Inches(x), Inches(y), Inches(w), Inches(h))
     shape.fill.solid()
     shape.fill.fore_color.rgb = color
     shape.line.fill.background()
+    shape.shadow.inherit = False
+    shape.name = name
     return shape
 
-def add_text(sl, text, x, y, w, h, size=12, bold=False, color=WHITE,
-             align=PP_ALIGN.LEFT, wrap=True):
+
+def _style_run(run, size, bold=False, color=TEXT, italic=False):
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.italic = italic
+    run.font.color.rgb = color
+    run.font.name = "Calibri"
+
+
+def _frame(tf, anchor=MSO_ANCHOR.TOP, margins=(0.05, 0.03, 0.05, 0.03)):
+    tf.word_wrap = True
+    tf.auto_size = MSO_AUTO_SIZE.NONE
+    tf.vertical_anchor = anchor
+    tf.margin_left, tf.margin_top, tf.margin_right, tf.margin_bottom = [Inches(m) for m in margins]
+
+
+def add_text(sl, text, x, y, w, h, size=12, bold=False, color=TEXT, align=PP_ALIGN.LEFT,
+             anchor=MSO_ANCHOR.TOP, italic=False, name="Text"):
     tb = sl.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
-    tf = tb.text_frame
-    tf.word_wrap = wrap
-    p  = tf.paragraphs[0]
+    tb.name = name
+    _frame(tb.text_frame, anchor)
+    p = tb.text_frame.paragraphs[0]
     p.alignment = align
     run = p.add_run()
     run.text = text
-    run.font.size = Pt(size)
-    run.font.bold = bold
-    run.font.color.rgb = color
-    run.font.name = "Calibri"
+    _style_run(run, size, bold, color, italic)
     return tb
 
-def add_image(sl, stream, x, y, w, h=None):
-    if h:
-        sl.shapes.add_picture(stream, Inches(x), Inches(y), Inches(w), Inches(h))
-    else:
-        sl.shapes.add_picture(stream, Inches(x), Inches(y), Inches(w))
 
-def slide_header(sl, title, subtitle=None, bar_color=DGREY):
-    add_rect(sl, 0, 0, 13.33, 1.1, bar_color)
-    add_text(sl, title, 0.35, 0.12, 11, 0.7, size=22, bold=True, color=WHITE)
+def _bullet(p, indent_in=0.2, char="•", color=None):
+    pPr = p._p.get_or_add_pPr()
+    pPr.set("marL", str(int(Inches(indent_in))))
+    pPr.set("indent", str(-int(Inches(indent_in))))
+    if color is not None:
+        clr = etree.SubElement(pPr, qn("a:buClr"))
+        srgb = etree.SubElement(clr, qn("a:srgbClr"))
+        srgb.set("val", "%02X%02X%02X" % tuple(color))
+    font = etree.SubElement(pPr, qn("a:buFont"))
+    font.set("typeface", "Arial")
+    bu = etree.SubElement(pPr, qn("a:buChar"))
+    bu.set("char", char)
+
+
+def add_paragraphs(sl, paras, x, y, w, h, size=12, color=MUTED, bullets=True, space_after=7,
+                   bullet_color=None, name="Text"):
+    """paras: list of str or (lead, rest). A lead is written in bold and white before the rest."""
+    tb = sl.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+    tb.name = name
+    _frame(tb.text_frame)
+    first = True
+    for item in paras:
+        p = tb.text_frame.paragraphs[0] if first else tb.text_frame.add_paragraph()
+        first = False
+        p.space_after = Pt(space_after)
+        lead, rest = item if isinstance(item, tuple) else (None, item)
+        if lead:
+            r = p.add_run()
+            r.text = lead + " "
+            _style_run(r, size, True, TEXT)
+        r = p.add_run()
+        r.text = rest
+        _style_run(r, size, False, color)
+        if bullets:
+            _bullet(p, color=bullet_color)
+    return tb
+
+
+def text_on(rgb_tuple):
+    """Dark or white text, whichever reads better on the given fill."""
+    r, g, b = rgb_tuple
+    lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return BG if lum > 150 else TEXT
+
+
+def new_slide(title, subtitle=None, bar=PANEL, bar_text=TEXT, sub_color=MUTED):
+    _slide_no[0] += 1
+    sl = prs.slides.add_slide(TITLE_ONLY)
+    sl.background.fill.solid()
+    sl.background.fill.fore_color.rgb = BG
+    bar_shape = add_rect(sl, 0, 0, 13.333, 1.1, bar, name="Header bar")
+    _to_back(sl, bar_shape)
+    t = sl.shapes.title
+    t.left, t.top, t.width, t.height = Inches(0.35), Inches(0.1), Inches(12.6), Inches(0.62)
+    _frame(t.text_frame, MSO_ANCHOR.MIDDLE, (0.05, 0.0, 0.05, 0.0))
+    t.text_frame.text = title
+    p = t.text_frame.paragraphs[0]
+    p.alignment = PP_ALIGN.LEFT
+    _style_run(p.runs[0], 26, True, bar_text)
     if subtitle:
-        add_text(sl, subtitle, 0.35, 0.75, 11, 0.3, size=10, color=LGREY)
-
-def footer(sl, page_num):
-    add_text(sl, f"Greek Banking Sector Analysis 2022–2024  |  Spyros Papastergiou  |  {page_num}",
-             0.3, 7.2, 12.5, 0.25, size=8, color=LGREY, align=PP_ALIGN.RIGHT)
+        add_text(sl, subtitle, 0.35, 0.72, 12.6, 0.32, size=12, color=sub_color, name="Subtitle")
+    footer(sl)
+    return sl
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 1 — TITLE
-# ════════════════════════════════════════════════════════════════════════════
-sl1 = add_slide()
-add_rect(sl1, 0, 0, 13.33, 7.5, NAVY)
-add_rect(sl1, 0, 0, 0.25, 7.5, BCOLORS_HEX["Eurobank"])   # left accent bar
-
-add_text(sl1, "GREEK BANKING SECTOR ANALYSIS",
-         0.6, 1.8, 12, 1.0, size=32, bold=True, color=WHITE)
-add_text(sl1, "2022 – 2024",
-         0.6, 2.85, 6, 0.6, size=24, bold=False, color=LGREY)
-add_text(sl1,
-         "Eurobank  ·  Alpha Bank  ·  Piraeus Bank  ·  NBG",
-         0.6, 3.6, 10, 0.5, size=14, color=LGREY)
-
-add_rect(sl1, 0.6, 4.4, 3.5, 0.04, BCOLORS_HEX["Eurobank"])
-
-add_text(sl1, "Spyros Papastergiou", 0.6, 4.6, 6, 0.4, size=12, bold=True, color=WHITE)
-add_text(sl1, "spyrossyo96@gmail.com  |  github.com/papastergiousp-maker/greek-banking-sector-analysis",
-         0.6, 5.05, 11, 0.35, size=9, color=LGREY)
-add_text(sl1, "Data sourced exclusively from audited annual reports · Not investment advice",
-         0.6, 6.8, 11, 0.35, size=8, color=rgb(71,85,105))
+def footer(sl):
+    add_text(sl, f"Greek Banking Sector Analysis 2022–2024  |  Spyros Papastergiou  |  {NOT_ADVICE.rstrip('.')}  |  "
+                 f"{_slide_no[0]} / {N_SLIDES}",
+             0.35, 7.1, 12.6, 0.28, size=10, color=MUTED, align=PP_ALIGN.RIGHT, name="Footer")
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 2 — EXECUTIVE SUMMARY
-# ════════════════════════════════════════════════════════════════════════════
-sl2 = add_slide()
-slide_header(sl2, "Executive Summary",
-             "Key findings from 12 annual reports  |  FY2022–2024")
-footer(sl2, "2 / 12")
+def add_chart(sl, fig, x, y, w, h, alt, dpi=200, name="Chart"):
+    """Place a matplotlib figure inside the box (x, y, w, h) without distorting it."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=dpi, bbox_inches="tight", facecolor=fig.get_facecolor())
+    plt.close(fig)
+    buf.seek(0)
+    with Image.open(buf) as im:
+        pw, ph = im.size
+    buf.seek(0)
+    scale = min(w / pw, h / ph)
+    iw, ih = pw * scale, ph * scale
+    pic = sl.shapes.add_picture(buf, Inches(x + (w - iw) / 2), Inches(y), Inches(iw), Inches(ih))
+    pic.name = name
+    pic._element.nvPicPr.cNvPr.set("descr", alt)
+    return pic
 
-findings = [
-    (BCOLORS_HEX["Eurobank"],
-     "+55% Sector NII Growth",
-     "Net interest income rose from €5.5bn (2022) to €8.6bn (2024) driven "
-     "almost entirely by ECB rate hikes. NBG leads with NIM of 3.14% — "
-     "highest in the peer group."),
-    (BCOLORS_HEX["NBG"],
-     "NPE Cleanup Complete",
-     "All four banks reduced NPE ratios below 4% by 2024 (from 5–8% in 2022). "
-     "NBG and Piraeus tied at 2.6% — a structural improvement that took a decade "
-     "and €tens of billions of portfolio disposals."),
-    (BCOLORS_HEX["Piraeus Bank"],
-     "Rate Cycle Now a Headwind",
-     "ECB cuts beginning in 2024 will reduce sector NII by ~€170–220m per 25bp. "
-     "Under EBA-style stress (+200bp CoR, −15% loans, −50bp NIM), Piraeus Bank's "
-     "CET1 falls to ~9.9% — breaching the 10.5% SREP floor."),
-]
 
-for i, (col, title, body) in enumerate(findings):
-    x = 0.35 + i * 4.3
-    add_rect(sl2, x, 1.3, 4.1, 0.06, col)
-    add_text(sl2, title, x, 1.45, 4.0, 0.45, size=13, bold=True, color=WHITE)
-    add_text(sl2, body,  x, 1.95, 4.0, 1.8,  size=9.5, color=LGREY)
+NO_STYLE_NO_GRID = "{2D5ABB26-0587-4C30-8999-92F81FD0307C}"
 
-# KPI summary table
-headers = ["Bank", "ROE 2024", "NIM 2024", "CET1 2024", "NPE 2024", "Net Profit 2024"]
-col_w   = [2.2, 1.6, 1.6, 1.6, 1.5, 2.1]
-col_x   = [0.35]
-for w in col_w[:-1]:
-    col_x.append(col_x[-1] + w)
 
-add_rect(sl2, 0.35, 4.1, sum(col_w), 0.35, DGREY)
-for j, (hdr, cx) in enumerate(zip(headers, col_x)):
-    add_text(sl2, hdr, cx+0.05, 4.12, col_w[j]-0.1, 0.3,
-             size=9, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+def add_table(sl, x, y, col_w, header, rows, size=12, row_h=0.4, aligns=None, colors=None, bolds=None,
+              alt="", name="Table", header_size=None):
+    """A real PowerPoint table. colors and bolds are optional lists of lists shaped like rows."""
+    n_rows, n_cols = len(rows) + 1, len(header)
+    gf = sl.shapes.add_table(n_rows, n_cols, Inches(x), Inches(y), Inches(sum(col_w)), Inches(row_h * n_rows))
+    gf.name = name
+    gf._element.nvGraphicFramePr.cNvPr.set("descr", alt)
+    tbl = gf.table
+    tblPr = tbl._tbl.tblPr
+    tblPr.set("firstRow", "1")
+    tblPr.set("bandRow", "0")
+    tblPr.find(qn("a:tableStyleId")).text = NO_STYLE_NO_GRID
+    aligns = aligns or ["l"] + ["c"] * (n_cols - 1)
+    for j, w in enumerate(col_w):
+        tbl.columns[j].width = Inches(w)
+    for i in range(n_rows):
+        tbl.rows[i].height = Inches(row_h)
 
-k24 = kpis[kpis.year == 2024].set_index("bank")
+    def put(cell, text, sz, bold, color, align, fill):
+        cell.fill.solid()
+        cell.fill.fore_color.rgb = fill
+        cell.vertical_anchor = MSO_ANCHOR.MIDDLE
+        cell.margin_left = cell.margin_right = Inches(0.08)
+        cell.margin_top = cell.margin_bottom = Inches(0.03)
+        tf = cell.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.alignment = {"l": PP_ALIGN.LEFT, "c": PP_ALIGN.CENTER, "r": PP_ALIGN.RIGHT}[align]
+        r = p.add_run()
+        r.text = str(text)
+        _style_run(r, sz, bold, color)
+
+    for j, h in enumerate(header):
+        put(tbl.cell(0, j), h, header_size or size, True, TEXT, aligns[j], PANEL)
+    for i, row in enumerate(rows, 1):
+        fill = PANEL_DARK if i % 2 else RGBColor(20, 34, 54)
+        for j, v in enumerate(row):
+            color = colors[i - 1][j] if colors and colors[i - 1][j] is not None else TEXT
+            bold = bolds[i - 1][j] if bolds else j == 0
+            put(tbl.cell(i, j), v, size, bold, color, aligns[j], fill)
+    return gf
+
+
+# ===========================================================================
+# SLIDE 1: COVER
+# ===========================================================================
+_slide_no[0] += 1
+cover = prs.slides.add_slide(TITLE_ONLY)
+cover.background.fill.solid()
+cover.background.fill.fore_color.rgb = BG
 for i, bank in enumerate(BANKS):
-    row_y = 4.5 + i * 0.42
-    row_bg = rgb(15,30,50) if i % 2 == 0 else DGREY
-    add_rect(sl2, 0.35, row_y, sum(col_w), 0.38, row_bg)
-    vals = [
-        bank,
-        f"{k24.loc[bank,'roe']:.1f}%",
-        f"{k24.loc[bank,'nim']:.2f}%",
-        f"{k24.loc[bank,'cet1']:.1f}%",
-        f"{k24.loc[bank,'npe_ratio']:.1f}%",
-        f"€{k24.loc[bank,'net_profit']:,.0f}m",
+    add_rect(cover, 0.6 + i * 0.95, 1.35, 0.85, 0.12, rgb(DISPLAY[bank]), name=f"{bank} colour bar")
+t = cover.shapes.title
+t.left, t.top, t.width, t.height = Inches(0.55), Inches(1.7), Inches(12.2), Inches(1.0)
+_frame(t.text_frame, MSO_ANCHOR.MIDDLE, (0.05, 0, 0.05, 0))
+t.text_frame.text = "GREEK BANKING SECTOR ANALYSIS"
+t.text_frame.paragraphs[0].alignment = PP_ALIGN.LEFT
+_style_run(t.text_frame.paragraphs[0].runs[0], 40, True, TEXT)
+add_text(cover, "FY2022–2024", 0.6, 2.75, 6, 0.55, size=26, color=MUTED, name="Period")
+add_text(cover, "Eurobank  ·  Alpha Bank  ·  Piraeus Bank  ·  NBG", 0.6, 3.4, 12, 0.45, size=18, color=TEXT,
+         name="Banks")
+add_text(cover, "Consolidated group figures: " + ", ".join(ENTITIES[b] for b in
+                                                           ("Alpha Bank", "Eurobank", "NBG", "Piraeus Bank")),
+         0.6, 3.9, 12.3, 0.6, size=12, color=MUTED, name="Entities")
+add_text(cover, "Latest restated figures. Every number is traced to a PDF page.", 0.6, 4.5, 12, 0.35, size=12,
+         color=MUTED, name="Basis")
+add_text(cover, "Spyros Papastergiou", 0.6, 5.25, 6, 0.4, size=16, bold=True, color=TEXT, name="Author")
+add_text(cover, f"{CONTACT_EMAIL}   |   {CONTACT_GITHUB}   |   {CONTACT_DASHBOARD}", 0.6, 5.7, 12.4, 0.35,
+         size=12, color=MUTED, name="Contact")
+add_text(cover, "For portfolio and educational purposes only. " + NOT_ADVICE, 0.6, 6.6, 12, 0.35, size=12,
+         color=MUTED, italic=True, name="Disclaimer")
+
+# ===========================================================================
+# SLIDE 2: EXECUTIVE SUMMARY
+# ===========================================================================
+sl = new_slide("Executive Summary", "Four listed groups, FY2022–2024. €m unless stated.")
+
+assert is_best("net_profit", "Eurobank")
+assert min(stress["net_profit_stress"].items(), key=lambda kv: kv[1])[0] == "Alpha Bank"
+assert stress["net_profit_stress"].drop("Alpha Bank").min() > 0
+assert stress["absorb_bp"].idxmin() == "Alpha Bank"
+other_bp = [int(round(stress.loc[b, "absorb_bp"])) for b in BANKS if b != "Alpha Bank"]
+assert (min(other_bp), max(other_bp)) == (353, 420)
+
+cards = [
+    (f"Sector NII up {nii_growth:.1f}% in two years",
+     f"Net interest income of the four banks rose from {eur(sector.loc[2022, 'nii'])} in 2022 to "
+     f"{eur(sector.loc[2024, 'nii'])} in 2024. Most of it came in 2023, when wider margins added "
+     f"{eur(walk_sector.loc[2023, 'rate'])} (rate effect). In 2024 NII grew by only "
+     f"{eur(walk_sector.loc[2024, 'delta'])}: {eur(walk_sector.loc[2024, 'rate'])} from rate and "
+     f"{eur(walk_sector.loc[2024, 'volume'])} from volume.", BANKS[0]),
+    ("2022 profit includes one-offs",
+     f"Sector net profit for 2022 was {eur(sector.loc[2022, 'net_profit'])} as reported and "
+     f"{eur(VERIFIED['sector_underlying_2022'])} on an underlying basis. On underlying figures 2023 profit "
+     f"rose about {np_2023_underlying:.0f}% instead of falling {abs(np_2023_reported):.1f}%.", BANKS[2]),
+    ("Alpha is the weak point under stress",
+     f"In a one-year stress test three banks stay profitable and Alpha loses "
+     f"{eur(abs(stress.loc['Alpha Bank', 'net_profit_stress']))}. Alpha can absorb "
+     f"{stress.loc['Alpha Bank', 'absorb_bp']:.0f}bp of extra cost of risk before a pre-tax loss, against "
+     f"{min(other_bp)} to {max(other_bp)}bp for the other three.", BANKS[1]),
+    ("Capital quality and funding",
+     f"DTCs fell from €{sector.loc[2022, 'dtc'] / 1000:.1f}bn in 2022 to €{sector.loc[2024, 'dtc'] / 1000:.1f}bn "
+     f"in 2024. At end-2024 they were {k24.loc['Eurobank', 'dtc_to_cet1']:.0f}% of CET1 capital at Eurobank and "
+     f"{k24.loc['Piraeus Bank', 'dtc_to_cet1']:.0f}% at Piraeus. ECB funding of the four banks fell from "
+     f"€{ECB_FUNDING[2022]}bn (end-2022) to €{ECB_FUNDING[2024]}bn (end-2024), all of it at Alpha.", BANKS[3]),
+]
+card_w, gap = 3.0, 0.2
+for i, (head, body, bank) in enumerate(cards):
+    cx = 0.35 + i * (card_w + gap)
+    add_rect(sl, cx, 1.3, card_w, 2.65, PANEL_DARK, name="Card")
+    add_rect(sl, cx, 1.3, card_w, 0.07, rgb(DISPLAY[bank]), name="Card accent")
+    add_text(sl, head, cx + 0.1, 1.45, card_w - 0.2, 0.62, size=15, bold=True, color=TEXT, name="Card title")
+    add_text(sl, body, cx + 0.1, 2.1, card_w - 0.2, 2.1, size=12.5, color=MUTED, name="Card text")
+
+add_text(sl, "FY2024 key figures", 0.35, 4.15, 6, 0.3, size=14, bold=True, color=TEXT, name="Table title")
+metrics = [("net_profit", True), ("roe", True), ("rote", True), ("nim", True), ("cost_to_income", False),
+           ("cet1", True), ("npe_ratio", False), ("dtc_to_cet1", False)]
+rows, colors = [], []
+for bank in BANKS:
+    r = k24.loc[bank]
+    rows.append([bank, eur(r["net_profit"]), pct1(r["roe"]), pct1(r["rote"]), f"{r['nim']:.2f}%",
+                 pct1(r["cost_to_income"]), pct1(r["cet1"]), pct1(r["npe_ratio"]), f"{r['dtc_to_cet1']:.0f}%"])
+    c = [rgb(DISPLAY[bank])]
+    for metric, high in metrics:
+        c.append(GOOD if bank in best_banks(k24, metric, high) else None)
+    colors.append(c)
+add_table(sl, 0.35, 4.5, [1.9, 1.55, 1.15, 1.15, 1.15, 1.75, 1.2, 1.15, 1.6],
+          ["Bank", "Net profit", "ROE", "RoTE", "NIM", "Cost-to-income", "CET1", "NPE ratio", "DTC / CET1"],
+          rows, size=13, row_h=0.4, colors=colors,
+          alt="Table of FY2024 net profit, ROE, RoTE, NIM, cost-to-income, CET1, NPE ratio and DTC share of CET1 "
+              "for the four banks. Green marks the best of the four.", name="FY2024 key figures")
+add_text(sl, "Green = best of the four (lowest for cost-to-income, NPE ratio and DTC / CET1). "
+             "DTC = deferred tax credit, a tax claim on the Greek State that counts in CET1 capital.",
+         0.35, 6.6, 12.6, 0.4, size=11, color=MUTED, name="Table note")
+
+# ===========================================================================
+# SLIDE 3: SECTOR LANDSCAPE
+# ===========================================================================
+sl = new_slide("Sector Landscape: NII and Profitability",
+               f"Sector NII rose {nii_growth:.1f}% from 2022 to 2024. €m unless stated.")
+
+fig, (ax, ax2) = new_fig(1, 2, figsize=(12.6, 4.5), gridspec_kw={"width_ratios": [1.15, 1]})
+x = np.arange(len(BANKS))
+bw = 0.26
+for j, yr in enumerate(YEARS):
+    vals = [kpis[(kpis.bank == b) & (kpis.year == yr)]["nii"].iloc[0] for b in BANKS]
+    bars = ax.bar(x + (j - 1) * bw, vals, bw * 0.94, color=[mpl(DISPLAY[b]) for b in BANKS],
+                  alpha=[0.45, 0.72, 1.0][j])
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, v + 40, f"{v:,.0f}", ha="center", va="bottom", fontsize=9,
+                color=LABEL)
+ax.set_title("Net interest income by bank (€m)", pad=10)
+ax.set_xticks(x)
+ax.set_xticklabels(BANKS, fontsize=11)
+ax.set_ylim(0, 3150)
+ax.legend(handles=[Patch(facecolor="#94a3b8", alpha=a, label=str(y)) for a, y in zip([0.45, 0.72, 1.0], YEARS)],
+          loc="upper center", ncol=3, fontsize=10.5)
+style_axes(ax)
+euro_axis(ax)
+
+label_y = {}
+for bank in BANKS:
+    b = kpis[kpis.bank == bank].sort_values("year")
+    ax2.plot(b["year"], b["roe"], color=mpl(DISPLAY[bank]), marker="o", markersize=7)
+    label_y[bank] = b["roe"].iloc[-1]
+# spread the end labels so that close values do not overlap
+order = sorted(BANKS, key=lambda k: label_y[k])
+pos = {}
+min_gap = 1.5
+for i, bank in enumerate(order):
+    pos[bank] = label_y[bank] if i == 0 else max(label_y[bank], pos[order[i - 1]] + min_gap)
+for bank in BANKS:
+    ax2.text(2024.08, pos[bank], f"{bank} {label_y[bank]:.1f}%", color=mpl(DISPLAY[bank]), fontsize=10.5,
+             va="center", fontweight="bold")
+ax2.axhline(COE, linestyle="--", color="#94a3b8", linewidth=1.2)
+ax2.text(2021.9, COE + 0.3, f"Assumed cost of equity {COE:.0f}%", color="#cbd5e1", fontsize=10.5, va="bottom")
+ax2.set_title("Return on average equity (%)", pad=10)
+ax2.set_xticks(YEARS)
+ax2.set_xlim(2021.8, 2025.1)
+ax2.set_ylim(4, 24)
+ax2.set_yticks([5, 10, 15, 20])
+ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f}%"))
+style_axes(ax2)
+fig.tight_layout(w_pad=2.5)
+add_chart(sl, fig, 0.35, 1.25, 12.6, 4.6,
+          f"Left: grouped bar chart of net interest income for each bank in 2022, 2023 and 2024. Sector total "
+          f"{sector.loc[2022, 'nii']:,.0f}, {sector.loc[2023, 'nii']:,.0f} and {sector.loc[2024, 'nii']:,.0f} million "
+          f"euro. Right: line chart of return on average equity per bank, 2022 to 2024, with a dashed line at the "
+          f"assumed cost of equity of 10 percent.", name="NII and ROE charts")
+add_paragraphs(sl, [
+    f"Net profit of the four banks: {eur(sector.loc[2022, 'net_profit'])} (2022), "
+    f"{eur(sector.loc[2023, 'net_profit'])} (2023), {eur(sector.loc[2024, 'net_profit'])} (2024). "
+    f"2022 includes one-off items (underlying {eur(VERIFIED['sector_underlying_2022'])}).",
+    "Eurobank 2024 includes Hellenic Bank, consolidated from 30 June 2024.",
+], 0.35, 5.95, 12.6, 1.0, size=12, color=MUTED, space_after=4)
+
+# ===========================================================================
+# SLIDES 4 TO 7: ONE PAGE PER BANK
+# ===========================================================================
+
+
+def bank_slide(bank):
+    r, p = k24.loc[bank], k23.loc[bank]
+    br = BRAND[bank]
+    sl = new_slide(bank, f"{ENTITIES[bank]}  |  FY2024 snapshot", bar=rgb(br), bar_text=text_on(br),
+                   sub_color=text_on(br))
+    cards = [
+        ("ROE", pct1(r["roe"]), r["roe"] - p["roe"], 1, True),
+        ("NIM", f"{r['nim']:.2f}%", r["nim"] - p["nim"], 2, True),
+        ("CET1", pct1(r["cet1"]), r["cet1"] - p["cet1"], 1, True),
+        ("Cost-to-income", pct1(r["cost_to_income"]), r["cost_to_income"] - p["cost_to_income"], 1, False),
+        ("NPE ratio", pct1(r["npe_ratio"]), r["npe_ratio"] - p["npe_ratio"], 1, False),
+        ("Net profit", eur(r["net_profit"]), (r["net_profit"] - p["net_profit"]) / abs(p["net_profit"]) * 100, None,
+         True),
     ]
-    for j, (val, cx) in enumerate(zip(vals, col_x)):
-        is_bank = j == 0
-        add_text(sl2, val, cx+0.05, row_y+0.04, col_w[j]-0.1, 0.32,
-                 size=9.5, bold=is_bank,
-                 color=RGBColor(*BCOLORS[bank]) if is_bank else WHITE,
-                 align=PP_ALIGN.LEFT if is_bank else PP_ALIGN.CENTER)
+    cw, cg = 1.98, 0.14
+    for i, (label, value, delta, dec, up_good) in enumerate(cards):
+        cx = 0.35 + i * (cw + cg)
+        add_rect(sl, cx, 1.3, cw, 1.15, PANEL_DARK, name="KPI card")
+        add_rect(sl, cx, 1.3, cw, 0.06, rgb(DISPLAY[bank]), name="KPI accent")
+        add_text(sl, label, cx + 0.05, 1.38, cw - 0.1, 0.28, size=11, color=MUTED, align=PP_ALIGN.CENTER,
+                 name="KPI label")
+        add_text(sl, value, cx + 0.05, 1.64, cw - 0.1, 0.45, size=20, bold=True, color=TEXT,
+                 align=PP_ALIGN.CENTER, name="KPI value")
+        if dec is None:
+            txt = f"{delta:+.1f}% vs 2023"
+        else:
+            txt = f"{delta:+.{dec}f} pp vs 2023"
+        good = (delta > 0) == up_good
+        col = MUTED if abs(delta) < 1e-9 else (GOOD if good else BAD)
+        add_text(sl, txt, cx + 0.05, 2.1, cw - 0.1, 0.28, size=11, color=col, align=PP_ALIGN.CENTER,
+                 name="KPI change")
+    return sl
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 3 — SECTOR LANDSCAPE
-# ════════════════════════════════════════════════════════════════════════════
-sl3 = add_slide()
-slide_header(sl3, "Sector Landscape — NII & Profitability",
-             "Net Interest Income surge driven by ECB rate cycle  |  All values €m")
-footer(sl3, "3 / 12")
-
-with mpl_context():
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-    fig.patch.set_facecolor("#0a1628")
-
-    # Left: NII grouped bar
-    ax = axes[0]
-    x   = np.arange(len(BANKS))
-    w   = 0.25
-    for j, yr in enumerate(YEARS):
-        vals = [kpis[(kpis.bank==b)&(kpis.year==yr)]["nii"].values[0] for b in BANKS]
-        bars = ax.bar(x + (j-1)*w, vals, w*0.92,
-                      color=[bank_color_mpl(b) for b in BANKS],
-                      alpha=0.6+j*0.15, label=str(yr))
-        for bar, v in zip(bars, vals):
-            if yr == 2024:
-                ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+20,
-                        f"€{v/1000:.1f}bn", ha="center", va="bottom", fontsize=6.5,
-                        color="#f1f5f9")
-    ax.set_title("Net Interest Income by Bank (€m)", fontsize=10, pad=8)
-    ax.set_xticks(x)
-    ax.set_xticklabels(BANKS, fontsize=8)
-    ax.legend(fontsize=8, framealpha=0)
-    ax.grid(axis="y", alpha=0.3)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"€{v/1000:.1f}bn" if v >= 1000 else f"€{v:,.0f}m"))
-
-    # Right: ROE trend lines
-    ax2 = axes[1]
-    for bank in BANKS:
-        bdf = kpis[kpis.bank == bank].sort_values("year")
-        ax2.plot(bdf["year"], bdf["roe"],
-                 color=bank_color_mpl(bank), marker="o", markersize=6, label=bank)
-        ax2.annotate(f"{bdf[bdf.year==2024]['roe'].values[0]:.1f}%",
-                     xy=(2024, bdf[bdf.year==2024]["roe"].values[0]),
-                     xytext=(5, 0), textcoords="offset points",
-                     fontsize=7.5, color=bank_color_mpl(bank))
-    ax2.axhline(11, linestyle="--", color="#475569", linewidth=1, label="CoE ~11%")
-    ax2.set_title("Return on Equity (%)", fontsize=10, pad=8)
-    ax2.set_xticks(YEARS)
-    ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"{v:.0f}%"))
-    ax2.legend(fontsize=7.5, framealpha=0)
-    ax2.grid(axis="y", alpha=0.3)
-
-    fig.tight_layout(pad=1.5)
-    stream3 = fig_to_stream(fig, dpi=150)
-
-add_image(sl3, stream3, 0.35, 1.2, 12.5)
+def bank_chart(bank):
+    b = kpis[kpis.bank == bank].sort_values("year")
+    fig, ax1 = new_fig(figsize=(5.9, 3.7))
+    col = mpl(DISPLAY[bank])
+    bars = ax1.bar(b["year"], b["nii"], 0.5, color=col, alpha=0.8)
+    for bar, v in zip(bars, b["nii"]):
+        ax1.text(bar.get_x() + bar.get_width() / 2, v / 2, f"{v:,.0f}", ha="center", va="center", fontsize=11,
+                 color="#0a1628", fontweight="bold")
+    ax1.set_ylabel("NII (€m)")
+    ax1.set_ylim(0, b["nii"].max() * 1.45)
+    ax1.set_xticks(YEARS)
+    style_axes(ax1)
+    euro_axis(ax1)
+    ax2 = ax1.twinx()
+    ax2.plot(b["year"], b["roe"], color="#4ade80", marker="o", markersize=7)
+    for yr, v in zip(b["year"], b["roe"]):
+        ax2.annotate(f"{v:.1f}%", (yr, v), textcoords="offset points", xytext=(0, 10), ha="center", fontsize=11,
+                     color="#4ade80", fontweight="bold",
+                     bbox=dict(boxstyle="round,pad=0.18", fc="#0a1628", ec="none", alpha=0.9))
+    ax2.set_ylim(0, max(b["roe"].max() * 1.35, 10))
+    ax2.set_ylabel("ROE (%)", color="#4ade80")
+    ax2.tick_params(axis="y", colors="#4ade80", length=0)
+    for side in ("top",):
+        ax2.spines[side].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    ax1.set_title("NII (bars) and ROE (line)", pad=10)
+    fig.tight_layout()
+    return fig
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDES 4–7 — BANK ONE-PAGERS
-# ════════════════════════════════════════════════════════════════════════════
-BANK_BULLETS = {
+# Statements about each bank, checked against the data before they are written.
+assert is_best("roe", "Eurobank") and is_best("net_profit", "Eurobank")
+assert is_best("dtc_to_cet1", "Eurobank", high=False)
+assert is_best("roe", "Alpha Bank", high=False) and is_best("rote", "Alpha Bank", high=False)
+assert is_best("npe_ratio", "Alpha Bank", high=True)            # highest NPE ratio
+assert is_best("cost_to_income", "Alpha Bank", high=True)       # highest cost-to-income
+assert is_best("cost_of_risk", "Alpha Bank", high=True)         # highest cost of risk
+assert is_best("cost_to_income", "Piraeus Bank", high=False)
+assert is_best("cost_of_risk", "Piraeus Bank", high=False)
+assert is_best("dtc_to_cet1", "Piraeus Bank", high=True)
+assert is_best("cet1", "Piraeus Bank", high=False)
+assert is_best("nim", "NBG") and is_best("cet1", "NBG")
+assert is_best("loan_to_deposit", "NBG", high=False)
+assert set(best_banks(k24, "npe_ratio", high=False)) == {"NBG", "Piraeus Bank"}
+assert min(nii_2026_change, key=nii_2026_change.get) == "NBG"
+assert min(eba_change, key=eba_change.get) == "Alpha Bank"
+assert max(stress["absorb_bp"].items(), key=lambda kv: kv[1])[0] == "NBG"
+vol24 = walk[walk.year == 2024].set_index("bank")["volume"]
+rate24 = walk[walk.year == 2024].set_index("bank")["rate"]
+assert vol24["Alpha Bank"] < 0
+assert stress["absorb_bp"].idxmin() == "Alpha Bank" and stress["absorb_bp"].idxmax() == "NBG"
+
+
+def stress_line(bank, rank_note=""):
+    s = stress.loc[bank]
+    cet1 = f"CET1 moves from {pct1(s['cet1_start'])} to {pct1(s['cet1_end'])}"
+    tail = f"Extra cost of risk before a pre-tax loss: {s['absorb_bp']:.0f}bp{rank_note}."
+    if s["net_profit_stress"] >= 0:
+        return f"Net profit stays at {eur(s['net_profit_stress'])} and {cet1}. {tail}"
+    return f"It is the only bank with a loss, of {eur(abs(s['net_profit_stress']))}, and {cet1}. {tail}"
+
+
+def eba_line(bank):
+    a, b = VERIFIED["eba_2023"][bank]
+    return f"fully loaded CET1 fell from {a:.1f}% (Dec 2022) to {b:.1f}% (end-2025)"
+
+
+BANK_POINTS = {
     "Eurobank": [
-        "ROE of 16.9% — highest in peer group; only bank trading below justified P/B (~1.5x vs market ~1.3x)",
-        "Hellenic Bank consolidation adds Cypriot diversification; 71% of loans outside Greece by 2024",
-        "Best earnings quality: lowest C/I in sector (32.6%); 710bp CET1 headroom above SREP floor",
+        ("Returns.", f"Highest ROE ({pct1(k24.loc['Eurobank', 'roe'])}) and largest net profit "
+                     f"({eur(k24.loc['Eurobank', 'net_profit'])}) of the four banks in 2024."),
+        ("Hellenic Bank.", f"Consolidated from 30 June 2024. Total assets rose {k24.loc['Eurobank', 'assets_yoy']:.1f}% "
+                           f"to {eur(k24.loc['Eurobank', 'total_assets'])} and deposits rose "
+                           f"{(k24.loc['Eurobank', 'deposits'] / k23.loc['Eurobank', 'deposits'] - 1) * 100:.1f}%. "
+                           f"Its volume effect on NII was {eur(vol24['Eurobank'])}."),
+        ("Capital quality.", f"DTCs were {k24.loc['Eurobank', 'dtc_to_cet1']:.0f}% of CET1 capital at end-2024, "
+                             f"the lowest share of the four banks."),
+        ("Stress test.", stress_line("Eurobank")),
     ],
     "Alpha Bank": [
-        "ROE of 8.2% below CoE of ~11% — justified P/B ~0.7x; re-rate requires ROE expansion",
-        "NPE cleanup accelerated: ratio fell from 7.8% (2022) to 3.8% (2024) via GAIA II and Project ACAC",
-        "NII flat in 2024 (−0.3% YoY) as rate tailwind fades; operational leverage improving (C/I 37.7%)",
+        ("Returns.", f"Lowest ROE ({pct1(k24.loc['Alpha Bank', 'roe'])}) and RoTE "
+                     f"({pct1(k24.loc['Alpha Bank', 'rote'])}) of the four banks in 2024."),
+        ("NII.", f"Fell {abs(k24.loc['Alpha Bank', 'nii_yoy']):.1f}% in 2024 after rising "
+                 f"{k23.loc['Alpha Bank', 'nii_yoy']:.1f}% in 2023. The volume effect took "
+                 f"{eur(abs(vol24['Alpha Bank']))} off NII."),
+        ("Asset quality and costs.", f"NPE ratio fell from {pct1(k22.loc['Alpha Bank', 'npe_ratio'])} (2022) to "
+                                     f"{pct1(k24.loc['Alpha Bank', 'npe_ratio'])} (2024), still the highest of the "
+                                     f"four. Cost-to-income ({pct1(k24.loc['Alpha Bank', 'cost_to_income'])}) and "
+                                     f"cost of risk ({k24.loc['Alpha Bank', 'cost_of_risk']:.2f}%) are the highest too."),
+        ("Funding.", f"The only bank still funded by the ECB at end-2024 (€{ECB_FUNDING[2024]}bn)."),
+        ("Stress test.", stress_line("Alpha Bank", ", the least of the four banks")),
+        ("EBA 2023.", f"In the official adverse scenario {eba_line('Alpha Bank')}, the largest fall of the four."),
     ],
     "Piraeus Bank": [
-        "2024 profit surge (+35% YoY) partly driven by ~€165m after-tax impairment benefit; underlying growth ~+14%",
-        "Best-in-class efficiency: C/I of 31.8% — lowest in sector; strong operational improvement trajectory",
-        "Tightest capital buffer: CET1 13.7%, only 320bp above SREP floor; breaches in EBA adverse stress",
+        ("Efficiency.", f"Lowest cost-to-income ({pct1(k24.loc['Piraeus Bank', 'cost_to_income'])}) and lowest cost "
+                        f"of risk ({k24.loc['Piraeus Bank', 'cost_of_risk']:.2f}%) of the four banks in 2024."),
+        ("Profit.", f"Net profit rose {k24.loc['Piraeus Bank', 'profit_yoy']:.1f}% to "
+                    f"{eur(k24.loc['Piraeus Bank', 'net_profit'])}, while NII grew only "
+                    f"{k24.loc['Piraeus Bank', 'nii_yoy']:.1f}%. Loan impairments fell to "
+                    f"{eur(abs(k24.loc['Piraeus Bank', 'impairment']))} from "
+                    f"{eur(abs(k23.loc['Piraeus Bank', 'impairment']))}."),
+        ("Capital quality.", f"DTCs were {k24.loc['Piraeus Bank', 'dtc_to_cet1']:.0f}% of CET1 capital at end-2024, "
+                             f"the highest share of the four banks. CET1 ratio of "
+                             f"{pct1(k24.loc['Piraeus Bank', 'cet1'])} is the lowest of the four."),
+        ("Stress test.", stress_line("Piraeus Bank")),
     ],
     "NBG": [
-        "Highest NIM (3.14%) and CET1 (19.1%) in sector; 860bp headroom above SREP floor",
-        "NPE ratio of 2.6% — tied for sector-best; ROE of 13.7% sustained above CoE despite rate headwinds",
-        "Structural rate sensitivity: higher fixed-spread SME/retail mix provides partial ECB rate hedge",
+        ("Margin and capital.", f"Highest NIM ({k24.loc['NBG', 'nim']:.2f}%) and highest CET1 ratio "
+                                f"({pct1(k24.loc['NBG', 'cet1'])}) of the four banks in 2024."),
+        ("Asset quality and liquidity.", f"NPE ratio of {pct1(k24.loc['NBG', 'npe_ratio'])}, level with Piraeus. "
+                                         f"Loan-to-deposit ratio of {pct1(k24.loc['NBG', 'loan_to_deposit'])}, the "
+                                         f"lowest of the four."),
+        ("Rough guide to 2026.", f"In the base case NII falls {abs(nii_2026_change['NBG']) * 100:.1f}% from 2024 "
+                                 f"to {eur(VERIFIED['nii_2026_base']['NBG'])}, the largest fall of the four. "
+                                 f"This is not a forecast."),
+        ("Stress test.", stress_line("NBG", ", the most of the four banks")),
     ],
 }
 
-for pg, bank in enumerate(BANKS, 4):
-    sl = add_slide()
-    bcolor = BCOLORS_HEX[bank]
-    slide_header(sl, bank, f"FY2024 Snapshot  |  {BANKS.index(bank)+1} of 4", bar_color=bcolor)
-    footer(sl, f"{pg} / 12")
+for n, bank in enumerate(BANKS):
+    sl = bank_slide(bank)
+    add_text(sl, "What the numbers show", 0.35, 2.7, 6.6, 0.35, size=15, bold=True, color=TEXT, name="Points title")
+    add_rect(sl, 0.35, 3.07, 6.6, 0.03, rgb(DISPLAY[bank]), name="Points rule")
+    add_paragraphs(sl, BANK_POINTS[bank], 0.35, 3.2, 6.6, 3.85, size=14 if len(BANK_POINTS[bank]) <= 4 else 13,
+                   color=MUTED, space_after=8,
+                   bullet_color=DISPLAY[bank], name="Points")
+    b = kpis[kpis.bank == bank].sort_values("year")
+    add_chart(sl, bank_chart(bank), 7.2, 2.65, 5.75, 4.3,
+              f"{bank}: bars show net interest income of {b['nii'].iloc[0]:,.0f}, {b['nii'].iloc[1]:,.0f} and "
+              f"{b['nii'].iloc[2]:,.0f} million euro in 2022, 2023 and 2024. The line shows return on equity of "
+              f"{b['roe'].iloc[0]:.1f}, {b['roe'].iloc[1]:.1f} and {b['roe'].iloc[2]:.1f} percent.",
+              name=f"{bank} chart")
 
-    k24b = kpis[(kpis.bank==bank)&(kpis.year==2024)].iloc[0]
-    k23b = kpis[(kpis.bank==bank)&(kpis.year==2023)].iloc[0]
-    k22b = kpis[(kpis.bank==bank)&(kpis.year==2022)].iloc[0]
+# ===========================================================================
+# SLIDE 8: PEER RANKINGS
+# ===========================================================================
+sl = new_slide("Peer Rankings: FY2024",
+               "Green outline = best of the four. Lower is better for cost-to-income and the NPE ratio.")
+ranking = [("roe", "ROE (%)", True, "%"), ("nim", "NIM (%)", True, "%"), ("cet1", "CET1 ratio (%)", True, "%"),
+           ("cost_to_income", "Cost-to-income (%)", False, "%"), ("npe_ratio", "NPE ratio (%)", False, "%"),
+           ("net_profit", "Net profit (€m)", True, "")]
+fig, axes = new_fig(2, 3, figsize=(12.6, 5.4))
+for ax, (key, label, high, sfx) in zip(axes.flat, ranking):
+    vals = k24[key]
+    order = vals.sort_values(ascending=not high).index.tolist()
+    best = best_banks(k24, key, high)
+    ypos = np.arange(len(order))
+    bars = ax.barh(ypos, [vals[b] for b in order], color=[mpl(DISPLAY[b]) for b in order], height=0.62)
+    for bar, b in zip(bars, order):
+        if b in best:
+            bar.set_edgecolor("#4ade80")
+            bar.set_linewidth(2.2)
+        v = vals[b]
+        txt = f"{v:.2f}%" if key == "nim" else (f"{v:.1f}%" if sfx else f"{v:,.0f}")
+        ax.text(v + vals.max() * 0.02, bar.get_y() + bar.get_height() / 2, txt, va="center", fontsize=10.5,
+                color=LABEL)
+    ax.set_yticks(ypos)
+    ax.set_yticklabels(order, fontsize=10.5)
+    ax.invert_yaxis()
+    ax.set_xlim(0, vals.max() * 1.28)
+    ax.set_xticks([])
+    ax.set_title(label, fontsize=12, pad=6)
+    ax.grid(False)
+    for side in ("top", "right", "bottom"):
+        ax.spines[side].set_visible(False)
+    ax.tick_params(length=0)
+fig.tight_layout(h_pad=2.2, w_pad=1.6)
+leaders = {label: " and ".join(best_banks(k24, key, high)) for key, label, high, _ in ranking}
+add_chart(sl, fig, 0.35, 1.25, 12.6, 5.7,
+          "Six bar charts of FY2024 values per bank, best on top: "
+          + "; ".join(f"{label.split(' (')[0]}: {leaders[label]}" for _, label, _, _ in ranking) + ".",
+          name="Peer rankings")
 
-    # KPI cards row
-    metrics = [
-        ("ROE",   f"{k24b['roe']:.1f}%",   f"{k24b['roe']-k23b['roe']:+.1f}pp"),
-        ("NIM",   f"{k24b['nim']:.2f}%",   f"{k24b['nim']-k23b['nim']:+.2f}pp"),
-        ("CET1",  f"{k24b['cet1']:.1f}%",  f"{k24b['cet1']-k23b['cet1']:+.1f}pp"),
-        ("C/I",   f"{k24b['cost_to_income']:.1f}%", f"{k24b['cost_to_income']-k23b['cost_to_income']:+.1f}pp"),
-        ("NPE",   f"{k24b['npe_ratio']:.1f}%", f"{k24b['npe_ratio']-k23b['npe_ratio']:+.1f}pp"),
-        ("Net\nProfit", f"€{k24b['net_profit']:,.0f}m",
-         f"{(k24b['net_profit']-k23b['net_profit'])/abs(k23b['net_profit'])*100:+.0f}%"),
-    ]
-    cw = 1.9
-    for mi, (lbl, val, delta) in enumerate(metrics):
-        cx = 0.35 + mi * (cw + 0.1)
-        add_rect(sl, cx, 1.25, cw, 1.0, DGREY)
-        add_rect(sl, cx, 1.25, cw, 0.06, bcolor)
-        add_text(sl, lbl,   cx+0.05, 1.32, cw-0.1, 0.3, size=9,  color=LGREY, align=PP_ALIGN.CENTER)
-        add_text(sl, val,   cx+0.05, 1.58, cw-0.1, 0.45, size=16, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
-        dcolor = GREEN if not delta.startswith("-") else rgb(239,68,68)
-        if lbl in ("C/I", "NPE"):
-            dcolor = rgb(239,68,68) if not delta.startswith("-") else GREEN
-        add_text(sl, delta, cx+0.05, 2.0,  cw-0.1, 0.22, size=9, color=dcolor, align=PP_ALIGN.CENTER)
+# ===========================================================================
+# SLIDE 9: NII RATE VS VOLUME AND ROUGH GUIDE TO 2026
+# ===========================================================================
+sl = new_slide("NII: Rate vs Volume, and a Rough Guide to 2026",
+               "Sector NII walk 2022 to 2024 and a base case for 2026. €m. A rough guide, not a forecast.")
 
-    # Bullet points
-    add_rect(sl, 0.35, 2.45, 6.5, 0.04, bcolor)
-    add_text(sl, "Investment Highlights", 0.35, 2.55, 6.5, 0.35,
-             size=11, bold=True, color=WHITE)
-    for bi, bullet in enumerate(BANK_BULLETS[bank]):
-        add_text(sl, f"▸  {bullet}", 0.35, 3.0 + bi * 0.75, 6.5, 0.7,
-                 size=9.5, color=LGREY)
+fig, (ax, ax2) = new_fig(1, 2, figsize=(12.6, 4.2), gridspec_kw={"width_ratios": [1.35, 1]})
+W23, W24 = walk_sector.loc[2023], walk_sector.loc[2024]
+steps = [("NII 2022", sector.loc[2022, "nii"], "total"),
+         ("Rate", W23["rate"], "rate"), ("Volume", W23["volume"], "volume"), ("Mix", W23["mix"], "mix"),
+         ("NII 2023", sector.loc[2023, "nii"], "total"),
+         ("Rate", W24["rate"], "rate"), ("Volume", W24["volume"], "volume"), ("Mix", W24["mix"], "mix"),
+         ("NII 2024", sector.loc[2024, "nii"], "total")]
+STEP_COLORS = {"total": "#cbd5e1", "rate": "#60a5fa", "volume": "#2dd4bf", "mix": "#a78bfa"}
+level = 0.0
+for i, (lab, v, kind) in enumerate(steps):
+    if kind == "total":
+        ax.bar(i, v, 0.62, color=STEP_COLORS[kind])
+        ax.text(i, v + 130, f"{v:,.0f}", ha="center", va="bottom", fontsize=10.5, color=LABEL, fontweight="bold")
+        level = v
+    else:
+        bottom = level if v >= 0 else level + v
+        ax.bar(i, abs(v), 0.62, bottom=bottom, color=STEP_COLORS[kind])
+        top = max(level, level + v)
+        ax.text(i, top + 130, f"{v:+,.0f}", ha="center", va="bottom", fontsize=10.5, color=LABEL)
+        level += v
+ax.set_xticks(range(len(steps)))
+ax.set_xticklabels([s[0] for s in steps], fontsize=10.5)
+ax.set_ylim(0, 10200)
+ax.set_title("Sector NII walk (€m)", pad=10)
+style_axes(ax)
+euro_axis(ax)
 
-    # Trend chart (NII + ROE dual-axis)
-    with mpl_context():
-        fig, ax1 = plt.subplots(figsize=(5, 3.5))
-        fig.patch.set_facecolor("#0a1628")
-        bdf = kpis[kpis.bank==bank].sort_values("year")
-        bc  = bank_color_mpl(bank)
-        ax1.bar(bdf["year"], bdf["nii"], 0.4, color=bc, alpha=0.65, label="NII")
-        ax1.set_ylabel("NII (€m)", fontsize=8)
-        ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"€{v:,.0f}m"))
-        ax2 = ax1.twinx()
-        ax2.plot(bdf["year"], bdf["roe"], color="#10b981", marker="o", markersize=6, linewidth=2, label="ROE")
-        ax2.axhline(11, linestyle="--", color="#475569", linewidth=1)
-        ax2.set_ylabel("ROE (%)", fontsize=8, color="#10b981")
-        ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"{v:.0f}%"))
-        ax2.tick_params(axis="y", colors="#10b981")
-        ax1.set_xticks(YEARS)
-        ax1.set_title(f"{bank} — NII & ROE", fontsize=9, pad=6)
-        ax1.grid(axis="y", alpha=0.2)
-        lines1, labels1 = ax1.get_legend_handles_labels()
-        lines2, labels2 = ax2.get_legend_handles_labels()
-        ax1.legend(lines1+lines2, labels1+labels2, fontsize=7.5, framealpha=0, loc="upper left")
-        fig.tight_layout()
-        stream_bank = fig_to_stream(fig, dpi=130)
+x = np.arange(len(BANKS))
+bw = 0.36
+v24 = [k24.loc[b, "nii"] for b in BANKS]
+v26 = [VERIFIED["nii_2026_base"][b] for b in BANKS]
+b1 = ax2.bar(x - bw / 2, v24, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=1.0)
+b2 = ax2.bar(x + bw / 2, v26, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=0.45, hatch="//",
+             edgecolor="#0a1628", linewidth=0)
+for bar, v in zip(list(b1) + list(b2), v24 + v26):
+    ax2.text(bar.get_x() + bar.get_width() / 2, v + 40, f"{v:,.0f}", ha="center", va="bottom", fontsize=9.5,
+             color=LABEL)
+ax2.set_xticks(x)
+ax2.set_xticklabels([f"{b}\n{nii_2026_change[b] * 100:+.1f}%" for b in BANKS], fontsize=10.5)
+ax2.set_ylim(0, 3350)
+ax2.set_title("NII 2024 and 2026 base case (€m)", pad=10)
+ax2.legend(handles=[Patch(facecolor="#94a3b8", label="2024 actual"),
+                    Patch(facecolor="#94a3b8", alpha=0.45, hatch="//", label="2026 base case")],
+           loc="upper center", ncol=2, fontsize=10.5)
+style_axes(ax2)
+euro_axis(ax2)
+fig.tight_layout(w_pad=2.5)
+add_chart(sl, fig, 0.35, 1.25, 12.6, 4.1,
+          f"Left: waterfall of sector net interest income from {sector.loc[2022, 'nii']:,.0f} in 2022 to "
+          f"{sector.loc[2023, 'nii']:,.0f} in 2023 and {sector.loc[2024, 'nii']:,.0f} in 2024, split into rate, volume "
+          f"and mix effects. Right: net interest income per bank in 2024 and in the 2026 base case, with the "
+          f"percentage change.", name="NII walk and 2026 base case")
+add_paragraphs(sl, [
+    ("2022 to 2023.", f"Wider margins (rate effect {eur(W23['rate'])}) drove NII up by {eur(W23['delta'])}. "
+                      f"Volume and mix took a little back."),
+    ("2023 to 2024.", f"NII rose by {eur(W24['delta'])}: rate {eur(W24['rate'])} and volume {eur(W24['volume'])}. "
+                      f"Eurobank's volume effect was {eur(vol24['Eurobank'])}, after it consolidated Hellenic Bank "
+                      f"from 30 June 2024. Rounded effects can differ from the total by €1m."),
+    ("2026 base case.", f"Sector NII of {eur(VERIFIED['sector_nii_2026_base'])}, "
+                        f"{abs(VERIFIED['sector_nii_2026_vs_2024_pct']):.1f}% below 2024. The percentage under each "
+                        f"bank is its change from 2024. NIM moves with the ECB yearly average deposit rate (gradual "
+                        f"cuts) and total assets grow 2% a year. The rate sensitivity of each bank rests on three "
+                        f"yearly points, so this is directional only. Banks may not add up to the sector total "
+                        f"because of rounding."),
+], 0.35, 5.4, 12.6, 1.65, size=11.5, color=MUTED, space_after=4)
 
-    add_image(sl, stream_bank, 7.1, 2.4, 5.8)
+# ===========================================================================
+# SLIDE 10: ONE-YEAR STRESS TEST
+# ===========================================================================
+sl = new_slide("One-Year Stress Test",
+               "FY2024 base. Cost of risk up 200bp, loans down 15%, NIM down 50bp. Directional only.")
+fig, (ax, ax2) = new_fig(1, 2, figsize=(12.6, 3.5))
+x = np.arange(len(BANKS))
+bw = 0.36
+base_np = [stress.loc[b, "net_profit"] for b in BANKS]
+adv_np = [stress.loc[b, "net_profit_stress"] for b in BANKS]
+c1 = ax.bar(x - bw / 2, base_np, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=1.0)
+c2 = ax.bar(x + bw / 2, adv_np, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=0.45, hatch="//",
+            edgecolor="#0a1628", linewidth=0)
+for bar, v in zip(list(c1) + list(c2), base_np + adv_np):
+    ax.text(bar.get_x() + bar.get_width() / 2, v + (40 if v >= 0 else -40), f"{v:,.0f}", ha="center",
+            va="bottom" if v >= 0 else "top", fontsize=10, color=LABEL)
+ax.axhline(0, color="#64748b", linewidth=1)
+ax.set_xticks(x)
+ax.set_xticklabels(BANKS, fontsize=10.5)
+ax.set_ylim(-420, 2050)
+ax.set_title("Net profit: FY2024 and stressed (€m)", pad=10)
+ax.legend(handles=[Patch(facecolor="#94a3b8", label="FY2024"),
+                   Patch(facecolor="#94a3b8", alpha=0.45, hatch="//", label="Stressed")], loc="upper right",
+          ncol=2)
+style_axes(ax)
+euro_axis(ax)
+c0 = [stress.loc[b, "cet1_start"] for b in BANKS]
+c3 = [stress.loc[b, "cet1_end"] for b in BANKS]
+d1 = ax2.bar(x - bw / 2, c0, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=1.0)
+d2 = ax2.bar(x + bw / 2, c3, bw * 0.95, color=[mpl(DISPLAY[b]) for b in BANKS], alpha=0.45, hatch="//",
+             edgecolor="#0a1628", linewidth=0)
+for bar, v in zip(list(d1) + list(d2), c0 + c3):
+    ax2.text(bar.get_x() + bar.get_width() / 2, v + 0.3, f"{v:.1f}%", ha="center", va="bottom", fontsize=10,
+             color=LABEL)
+ax2.set_xticks(x)
+ax2.set_xticklabels(BANKS, fontsize=10.5)
+ax2.set_ylim(0, 27)
+ax2.set_title("CET1 ratio: end-2024 and end of stress year (%)", pad=10)
+ax2.legend(handles=[Patch(facecolor="#94a3b8", label="End-2024"),
+                    Patch(facecolor="#94a3b8", alpha=0.45, hatch="//", label="End of stress year")],
+           loc="upper right", ncol=2)
+style_axes(ax2)
+fig.tight_layout(w_pad=2.5)
+add_chart(sl, fig, 0.35, 1.2, 12.6, 3.3,
+          "Left: net profit per bank in FY2024 and in the stress case. Alpha Bank turns to a loss of "
+          f"{abs(stress.loc['Alpha Bank', 'net_profit_stress']):,.0f} million euro, the other three stay "
+          "profitable. Right: CET1 ratio per bank at end-2024 and at the end of the stress year.",
+          name="Stress test charts")
 
+rows = []
+for bank in BANKS:
+    a, b = VERIFIED["eba_2023"][bank]
+    rows.append([bank, f"{stress.loc[bank, 'absorb_bp']:.0f}bp", f"{a:.1f}%", f"{b:.1f}%", f"{b - a:+.1f} pp"])
+colors = [[rgb(DISPLAY[b]), None, None, None, None] for b in BANKS]
+add_table(sl, 0.35, 4.6, [2.2, 3.6, 2.3, 2.6, 1.9],
+          ["Bank", "Extra cost of risk before a pre-tax loss", "EBA 2023: Dec 2022", "EBA 2023: adverse end-2025",
+           "Change"], rows, size=11.5, row_h=0.34, colors=colors,
+          alt="Table per bank: extra cost of risk the bank can absorb before a pre-tax loss in the one-year test, "
+              "and the official EBA 2023 stress test result for fully loaded CET1.", name="Stress and EBA table")
+add_text(sl, "Costs flat, 29% tax on the change in profit, no dividends, RWAs unchanged. Stressed CET1 = (reported CET1 "
+             "capital + stressed profit) / RWAs, so a bank that stays profitable ends the year with more CET1 because "
+             "no dividend is paid. The EBA 2023 test is a three-year scenario on the 31.12.2022 balance sheet and "
+             "cannot be compared with the simplified test.", 0.35, 6.35, 12.6, 0.7, size=10.5, color=MUTED,
+         name="Stress note")
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 8 — CROSS-BANK RANKINGS
-# ════════════════════════════════════════════════════════════════════════════
-sl8 = add_slide()
-slide_header(sl8, "Peer Rankings — FY2024",
-             "Green = best in class per metric  |  Direction-adjusted (lower C/I, NPE = better)")
-footer(sl8, "8 / 12")
+# ===========================================================================
+# SLIDE 11: VALUATION FRAMEWORK
+# ===========================================================================
+sl = new_slide("Valuation Framework: Justified P/TBV",
+               f"Justified P/TBV = (RoTE - g) / (CoE - g), with CoE {COE:.0f}% and g {G:.0f}% as assumptions. "
+               f"{NOT_ADVICE}")
+jp = {b: justified_ptbv(k24.loc[b, "rote"]) for b in BANKS}
+above = [b for b in BANKS if k24.loc[b, "rote"] > COE]
+below = [b for b in BANKS if k24.loc[b, "rote"] <= COE]
+assert above == ["Eurobank", "Piraeus Bank", "NBG"] and below == ["Alpha Bank"]
+assert max(jp, key=jp.get) == "Eurobank" and jp["Alpha Bank"] < 1.0 <= min(jp[b] for b in above)
 
-with mpl_context():
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4.5))
-    fig.patch.set_facecolor("#0a1628")
+rows, colors = [], []
+for bank in BANKS:
+    r = k24.loc[bank]
+    reading = "Earns above the assumed cost of equity" if bank in above else \
+        "Earns slightly below the assumed cost of equity"
+    rows.append([bank, eur(r["net_profit"]), eur(r["avg_tangible_equity"]), pct1(r["rote"]), f"{jp[bank]:.2f}x",
+                 reading])
+    colors.append([rgb(DISPLAY[bank]), None, None, None, TEXT, GOOD if bank in above else BAD])
+add_table(sl, 0.35, 1.3, [1.9, 1.8, 2.1, 1.4, 1.7, 3.7],
+          ["Bank", "Net profit 2024", "Avg tangible equity", "RoTE 2024", "Justified P/TBV", "Reading"],
+          rows, size=13, row_h=0.42, colors=colors, aligns=["l", "c", "c", "c", "c", "l"],
+          alt="Table per bank: net profit, average tangible equity, RoTE and justified price to tangible book "
+              "value for FY2024.", name="Valuation table")
 
-    ranking_metrics = [
-        ("roe",           "ROE (%)",           True,  "%"),
-        ("nim",           "NIM (%)",            True,  "%"),
-        ("cost_to_income","Cost-to-Income (%)",False, "%"),
-        ("cet1",          "CET1 (%)",           True,  "%"),
-        ("npe_ratio",     "NPE Ratio (%)",      False, "%"),
-        ("net_profit",    "Net Profit (€m)",    True,  ""),
-    ]
+fig, ax = new_fig(figsize=(5.2, 3.3))
+order = sorted(BANKS, key=lambda b: -jp[b])
+bars = ax.bar(range(len(order)), [jp[b] for b in order], 0.55, color=[mpl(DISPLAY[b]) for b in order])
+for bar, b in zip(bars, order):
+    ax.text(bar.get_x() + bar.get_width() / 2, jp[b] + 0.05, f"{jp[b]:.2f}x", ha="center", va="bottom",
+            fontsize=11.5, color=LABEL, fontweight="bold")
+ax.axhline(1.0, linestyle="--", color="#94a3b8", linewidth=1.3)
+ax.legend(handles=[Line2D([0], [0], linestyle="--", color="#94a3b8", label="1.0x: earns exactly the cost of equity")],
+          loc="upper right", fontsize=10)
+ax.set_xticks(range(len(order)))
+ax.set_xticklabels(order, fontsize=10.5)
+ax.set_ylim(0, max(jp.values()) * 1.3)
+ax.set_title("Justified P/TBV", pad=8)
+style_axes(ax)
+fig.tight_layout()
+add_chart(sl, fig, 7.6, 3.5, 5.35, 3.5,
+          "Bar chart of justified price to tangible book value: "
+          + ", ".join(f"{b} {jp[b]:.2f}x" for b in order)
+          + ". A dashed line marks 1.0x, where a bank earns exactly its cost of equity.", name="Justified P/TBV chart")
 
-    for ai, (col_key, label, higher_better, sfx) in enumerate(ranking_metrics):
-        ax = axes[ai % 3]
-        if ai == 3:
-            ax = axes[0]
+add_paragraphs(sl, [
+    ("What it measures.", "The multiple of tangible book value that a bank's return would justify if it lasted. "
+                          "A bank that earns exactly its cost of equity is worth 1.0x."),
+    ("What it does not do.", "No market prices are used, so the slide does not say whether any bank is cheap or "
+                             "expensive. It is a way to read returns, not a price target."),
+    ("Assumptions.", f"Cost of equity {COE:.0f}% and long-run growth {G:.0f}% are stated assumptions. Change them and "
+                     f"the multiples change. RoTE = net profit / average (equity less AT1 less goodwill and "
+                     f"intangibles)."),
+], 0.35, 3.6, 7.0, 3.4, size=13, color=MUTED, space_after=9, bullets=True)
 
-    # Use a 2x3 grid of small charts
-    fig2, axes2 = plt.subplots(2, 3, figsize=(12.5, 5))
-    fig2.patch.set_facecolor("#0a1628")
-    plt.subplots_adjust(hspace=0.55, wspace=0.35)
-
-    for ai, (col_key, label, higher_better, sfx) in enumerate(ranking_metrics):
-        ax = axes2[ai//3, ai%3]
-        k24_df = kpis[kpis.year==2024].set_index("bank")
-        vals   = k24_df[col_key].reindex(BANKS)
-        sorted_banks = vals.sort_values(ascending=not higher_better).index
-        sorted_vals  = vals[sorted_banks]
-        colors_sorted = [bank_color_mpl(b) for b in sorted_banks]
-        bars = ax.barh(range(len(sorted_banks)), sorted_vals.values,
-                       color=colors_sorted, height=0.6)
-        ax.set_yticks(range(len(sorted_banks)))
-        ax.set_yticklabels([b.replace(" Bank","").replace("Piraeus","Piraeus") for b in sorted_banks],
-                           fontsize=7.5)
-        ax.set_title(label, fontsize=8.5, pad=4)
-        ax.grid(axis="x", alpha=0.3)
-        for bar, v in zip(bars, sorted_vals.values):
-            fmt = f"{v:.1f}{sfx}" if sfx == "%" else f"€{v:,.0f}m"
-            ax.text(v + (sorted_vals.max()*0.01), bar.get_y()+bar.get_height()/2,
-                    fmt, va="center", fontsize=7, color="#f1f5f9")
-        ax.set_xlim(0, sorted_vals.max() * 1.2)
-        # Highlight best bar
-        bars[0].set_edgecolor("#10b981")
-        bars[0].set_linewidth(1.5)
-
-    fig2.tight_layout(pad=1.0)
-    stream8 = fig_to_stream(fig2, dpi=130)
-    plt.close(fig)
-
-add_image(sl8, stream8, 0.3, 1.2, 12.7)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 9 — NII FORECAST
-# ════════════════════════════════════════════════════════════════════════════
-sl9 = add_slide()
-slide_header(sl9, "NII Forecast 2025–2026 — ECB Rate Scenarios",
-             "Rate sensitivity: ~€195m sector NII per 25bp ECB cut  |  Volume: +2% p.a. assumed")
-footer(sl9, "9 / 12")
-
-ECB_HIST = {2022: 0.56, 2023: 3.39, 2024: 3.28}
-SCENARIOS = {
-    "Dovish":  {2025: 1.75, 2026: 1.50},
-    "Base":    {2025: 2.25, 2026: 2.00},
-    "Hawkish": {2025: 3.15, 2026: 3.15},
-}
-SC_COLORS = {"Dovish": "#60a5fa", "Base": "#10b981", "Hawkish": "#f59e0b"}
-NII_SENS   = -195  # €m per 25bp sector cut
-
-with mpl_context():
-    fig, (ax_rate, ax_nii) = plt.subplots(1, 2, figsize=(12, 4.5))
-    fig.patch.set_facecolor("#0a1628")
-
-    # ECB rate path
-    all_years = [2022, 2023, 2024, 2025, 2026]
-    for sc_name, sc_rates in SCENARIOS.items():
-        rates = [ECB_HIST[2022], ECB_HIST[2023], ECB_HIST[2024],
-                 sc_rates[2025], sc_rates[2026]]
-        lw = 2.5 if sc_name == "Base" else 1.5
-        ls = "-" if sc_name == "Base" else "--"
-        ax_rate.plot(all_years, rates, color=SC_COLORS[sc_name],
-                     linewidth=lw, linestyle=ls, marker="o", markersize=5, label=sc_name)
-    ax_rate.axvline(2024.5, linestyle=":", color="#475569", linewidth=1)
-    ax_rate.set_title("ECB Deposit Facility Rate Path (%)", fontsize=9.5)
-    ax_rate.set_xticks(all_years)
-    ax_rate.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-    ax_rate.legend(fontsize=8, framealpha=0)
-    ax_rate.grid(alpha=0.3)
-
-    # NII forecast per bank — base scenario
-    k24_nii    = kpis[kpis.year==2024].set_index("bank")["nii"]
-    sector_nii = k24_nii.sum()
-
-    for bank in BANKS:
-        hist_vals = [kpis[(kpis.bank==bank)&(kpis.year==y)]["nii"].values[0] for y in YEARS]
-        ax_nii.plot(YEARS, hist_vals, color=bank_color_mpl(bank),
-                    linewidth=2, marker="o", markersize=5)
-
-        nii_prev = k24_nii[bank]
-        fc_vals  = [nii_prev]
-        for y in [2025, 2026]:
-            prev_r = ECB_HIST[2024] if y == 2025 else SCENARIOS["Base"][2025]
-            curr_r = SCENARIOS["Base"][y]
-            delta_bp = (curr_r - prev_r) * 100
-            sector_d = (delta_bp / 25) * NII_SENS
-            bank_d   = sector_d * (k24_nii[bank] / sector_nii)
-            vol_d    = k24_nii[bank] * 0.02
-            nii_curr = nii_prev + bank_d + vol_d
-            fc_vals.append(nii_curr)
-            nii_prev = nii_curr
-
-        bridge_x = [2024, 2025, 2026]
-        ax_nii.plot(bridge_x, fc_vals, color=bank_color_mpl(bank),
-                    linewidth=1.5, linestyle="--", marker="D", markersize=4)
-        ax_nii.annotate(bank.replace(" Bank",""),
-                        xy=(2026, fc_vals[-1]),
-                        xytext=(3, 0), textcoords="offset points",
-                        fontsize=7, color=bank_color_mpl(bank))
-
-    ax_nii.axvline(2024.5, linestyle=":", color="#475569", linewidth=1)
-    ax_nii.set_title("NII Forecast — Base Scenario (€m)", fontsize=9.5)
-    ax_nii.set_xticks([2022,2023,2024,2025,2026])
-    ax_nii.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"€{v:,.0f}m"))
-    ax_nii.grid(alpha=0.3)
-
-    fig.tight_layout(pad=1.5)
-    stream9 = fig_to_stream(fig, dpi=150)
-
-add_image(sl9, stream9, 0.3, 1.2, 12.7)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 10 — STRESS TEST
-# ════════════════════════════════════════════════════════════════════════════
-sl10 = add_slide()
-slide_header(sl10, "EBA-Style Stress Test",
-             "Adverse scenario: +200bp CoR · −15% loans · −50bp NIM  |  Piraeus breaches 10.5% SREP floor")
-footer(sl10, "10 / 12")
-
-SREP = 10.5
-
-def stress_bank_pptx(bank):
-    row = kpis[kpis.bank==bank][kpis.year==2024].iloc[0]
-    nii = row["nii"]; assets = row["total_assets"]; loans = row["loans"]
-    impairment = row["impairment"]; opincome = row["operating_income"]
-    opex = row["operating_expenses"]; net_profit = row["net_profit"]; cet1 = row["cet1"]
-    nim = row["nim"] / 100
-    nim_adv = nim - 50/10000
-    loans_adv = loans * 0.85
-    nii_adv = nim_adv * assets * 0.85
-    other_income = opincome - nii
-    ppop_adv = nii_adv + other_income + opex
-    cor_adv = abs(impairment)/loans + 200/10000
-    imp_adv = -(cor_adv * loans_adv)
-    pbt_base = opincome + opex + impairment
-    pbt_adv  = ppop_adv + imp_adv
-    tr = max(0.15, min(0.35, 1 - net_profit/pbt_base)) if pbt_base else 0.24
-    stressed_profit = pbt_adv * (1-tr)
-    rwa = loans * 0.50
-    stressed_cet1 = cet1 + (stressed_profit - net_profit) / rwa * 100
-    return {"base_profit": net_profit, "adv_profit": stressed_profit,
-            "base_cet1": cet1, "adv_cet1": stressed_cet1}
-
-with mpl_context():
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
-    fig.patch.set_facecolor("#0a1628")
-
-    results = {b: stress_bank_pptx(b) for b in BANKS}
-
-    # Left: Net profit baseline vs adverse
-    x = np.arange(len(BANKS))
-    w = 0.35
-    base_p = [results[b]["base_profit"] for b in BANKS]
-    adv_p  = [results[b]["adv_profit"]  for b in BANKS]
-    ax1.bar(x-w/2, base_p, w, color=[bank_color_mpl(b) for b in BANKS], alpha=0.85, label="Baseline 2024")
-    ax1.bar(x+w/2, adv_p,  w, color=[bank_color_mpl(b) for b in BANKS], alpha=0.4,  label="Stressed")
-    ax1.set_title("Net Profit: Baseline vs Stressed (€m)", fontsize=9.5)
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(BANKS, fontsize=8)
-    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"€{v:,.0f}m"))
-    ax1.legend(fontsize=8, framealpha=0)
-    ax1.grid(axis="y", alpha=0.3)
-
-    # Right: CET1 baseline vs adverse with SREP line
-    base_c = [results[b]["base_cet1"] for b in BANKS]
-    adv_c  = [results[b]["adv_cet1"]  for b in BANKS]
-    ax2.bar(x-w/2, base_c, w, color=[bank_color_mpl(b) for b in BANKS], alpha=0.85, label="Baseline CET1")
-    bar_colors = ["#ef4444" if results[b]["adv_cet1"] < SREP else bank_color_mpl(b) for b in BANKS]
-    ax2.bar(x+w/2, adv_c, w, color=bar_colors, alpha=0.6, label="Stressed CET1")
-    ax2.axhline(SREP, color="#f59e0b", linestyle="--", linewidth=2, label=f"SREP floor {SREP}%")
-    ax2.set_title("CET1: Baseline vs Stressed (%)", fontsize=9.5)
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(BANKS, fontsize=8)
-    ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda v,_: f"{v:.1f}%"))
-    ax2.legend(fontsize=8, framealpha=0)
-    ax2.grid(axis="y", alpha=0.3)
-    # Annotate breach
-    for i, b in enumerate(BANKS):
-        adv = results[b]["adv_cet1"]
-        color = "#f87171" if adv < SREP else "#86efac"
-        ax2.text(i+w/2, adv+0.15, f"{adv:.1f}%", ha="center", fontsize=7.5, color=color)
-
-    fig.tight_layout(pad=1.5)
-    stream10 = fig_to_stream(fig, dpi=150)
-
-add_image(sl10, stream10, 0.3, 1.25, 12.7)
-
-
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 11 — VALUATION FRAMEWORK
-# ════════════════════════════════════════════════════════════════════════════
-sl11 = add_slide()
-slide_header(sl11, "Valuation Framework — P/B vs Justified P/B",
-             "Gordon Growth model: Justified P/B = ROE / CoE  |  CoE 11% (Rf 3.5% + ERP 5.5% + CRP 2%)")
-footer(sl11, "11 / 12")
-
-val_data = [
-    ("Eurobank",     "~1.3x", 16.9, 11.0, "~1.5x", "~15% discount",    "Quality premium warranted",      BCOLORS_HEX["Eurobank"]),
-    ("NBG",          "~1.3x", 13.7, 11.0, "~1.2x", "≈ fair value",     "Total return via buybacks",       BCOLORS_HEX["NBG"]),
-    ("Piraeus Bank", "~0.9x", 12.9, 11.0, "~1.2x", "~25% discount",    "CoR risk closes gap",             BCOLORS_HEX["Piraeus Bank"]),
-    ("Alpha Bank",   "~0.8x",  8.2, 11.0, "~0.7x", "Slight premium",   "Re-rate needs ROE > CoE",         BCOLORS_HEX["Alpha Bank"]),
+# ===========================================================================
+# SLIDE 12: METHODOLOGY AND DATA QUALITY
+# ===========================================================================
+sl = new_slide("Methodology and Data Quality",
+               "Annual reports only. Report file and PDF page recorded for every figure.")
+cols = [
+    ("Data", [
+        "12 annual reports: FY2022, FY2023 and FY2024 of the four groups",
+        "2024 and 2023 from the FY2024 reports (2023 restated), 2022 from the FY2023 reports",
+        "Statements read with Python (pdfplumber). CET1, NPE, DTC and RWAs as reported at each year end",
+    ]),
+    ("Checks", [
+        "Automated tests recompute ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the "
+        "statement lines",
+        "Assets equal liabilities plus equity for every bank and year",
+        "Every statement line and ratio has a report page",
+        "DTC share of CET1 is checked against the figure disclosed by Alpha and Eurobank",
+    ]),
+    ("Methods", [
+        "DuPont breakdown of ROE",
+        "CAMELS-style scorecard, own cut-offs, not a supervisory rating",
+        "NII rate, volume and mix walk",
+        "One-year stress test and the official EBA 2023 results",
+        "Justified P/TBV with stated assumptions",
+    ]),
+    ("Limits", [
+        "Yearly data only, so no view inside the year",
+        "CET1 ratios are as reported: Eurobank's 16.8% is before its FY2024 dividend accrual, the other three include FY2024 profit. NPE ratios follow each bank's own definition",
+        "Operating income and expenses follow each bank's own presentation",
+        "Stress test and NII scenario are simple and static: directional only",
+    ]),
 ]
+col_w, gap = 3.0, 0.2
+for i, (head, items) in enumerate(cols):
+    cx = 0.35 + i * (col_w + gap)
+    add_rect(sl, cx, 1.3, col_w, 0.42, PANEL, name="Column header")
+    add_text(sl, head, cx + 0.1, 1.33, col_w - 0.2, 0.36, size=14, bold=True, color=TEXT,
+             anchor=MSO_ANCHOR.MIDDLE, name="Column title")
+    add_paragraphs(sl, items, cx, 1.85, col_w, 2.9, size=12.5, color=MUTED, space_after=7,
+                   bullet_color=DISPLAY[BANKS[i]], name="Column text")
 
-add_rect(sl11, 0.3, 1.2, 12.5, 0.35, DGREY)
-hdrs = ["Bank","Market P/B","ROE 2024","CoE","Justified P/B","vs Market","Investment Signal"]
-col_xs = [0.35, 1.85, 3.35, 4.7, 5.85, 7.2, 8.9]
-col_ws = [1.45, 1.45, 1.3, 1.1, 1.3, 1.65, 3.5]
-for j, (h, cx, cw) in enumerate(zip(hdrs, col_xs, col_ws)):
-    add_text(sl11, h, cx, 1.22, cw-0.05, 0.3,
-             size=9, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+add_rect(sl, 0.35, 4.82, 12.6, 0.65, PANEL_DARK, name="Trace box")
+add_rect(sl, 0.35, 4.82, 0.07, 0.65, rgb(DISPLAY["Eurobank"]), name="Trace accent")
+add_paragraphs(sl, [("To check a number:", "find it in sources.csv in the repository. It lists the report file and the "
+                                            "PDF page of every figure used here.")],
+               0.55, 4.93, 12.2, 0.45, size=14, color=MUTED, bullets=False, space_after=0, name="Trace text")
+add_rect(sl, 0.35, 5.62, 12.6, 0.03, rgb(DISPLAY["Eurobank"]), name="Rule")
+add_text(sl, "Entities (consolidated group figures)", 0.35, 5.72, 6, 0.3, size=12, bold=True, color=TEXT,
+         name="Entities title")
+add_text(sl, ", ".join(ENTITIES[b] for b in ("Alpha Bank", "Eurobank", "NBG", "Piraeus Bank")),
+         0.35, 6.0, 12.6, 0.4, size=12, color=MUTED, name="Entities")
+add_text(sl, f"Spyros Papastergiou   |   {CONTACT_EMAIL}   |   {CONTACT_GITHUB}   |   {CONTACT_DASHBOARD}",
+         0.35, 6.5, 12.6, 0.3, size=12, color=TEXT, name="Contact")
+add_text(sl, "For portfolio and educational purposes only. " + NOT_ADVICE, 0.35, 6.78, 12.6, 0.3, size=11,
+         color=MUTED, italic=True, name="Disclaimer")
 
-for i, (bank, mkt, roe, coe, just, vs_mkt, signal, bclr) in enumerate(val_data):
-    row_y = 1.65 + i*0.85
-    row_bg = rgb(15,30,50) if i % 2 == 0 else DGREY
-    add_rect(sl11, 0.3, row_y, 12.5, 0.8, row_bg)
-    add_rect(sl11, 0.3, row_y, 0.06, 0.8, bclr)
-    vals_row = [bank, mkt, f"{roe:.1f}%", f"{coe:.1f}%", just, vs_mkt, signal]
-    for j, (val, cx, cw) in enumerate(zip(vals_row, col_xs, col_ws)):
-        align = PP_ALIGN.LEFT if j in (0, 6) else PP_ALIGN.CENTER
-        is_bank = j == 0
-        add_text(sl11, val, cx+0.08, row_y+0.18, cw-0.12, 0.45,
-                 size=10 if not is_bank else 11,
-                 bold=is_bank,
-                 color=bclr if is_bank else WHITE,
-                 align=align)
+assert len(prs.slides) == N_SLIDES, len(prs.slides)
 
-add_text(sl11,
-    "Methodology: CoE = Risk-free rate (3.5%) + Beta (1.0) × Equity Risk Premium (5.5%) + Country Risk Premium (2.0%) = 11.0%  |  "
-    "Market P/B approximate end-2024 prices. Justified P/B = ROE / CoE (Gordon Growth, g=0).",
-    0.3, 5.15, 12.5, 0.5, size=8, color=LGREY)
+# ---------------------------------------------------------------------------
+# Document properties and save
+# ---------------------------------------------------------------------------
+cp = prs.core_properties
+cp.title = "Greek Banking Sector Analysis 2022–2024"
+cp.author = "Spyros Papastergiou"
+cp.last_modified_by = "Spyros Papastergiou"
+cp.subject = "Eurobank, Alpha Bank, Piraeus Bank and NBG, FY2022–2024. Not investment advice."
+cp.keywords = "Greek banks, net interest income, stress test, CET1, DTC, justified P/TBV"
+cp.comments = f"Built by _build_pptx.py from kpis_final.csv. Contact: {CONTACT_EMAIL}"
+cp.created = cp.modified = datetime.now()
 
+# The default template uses an en dash as a bullet character in its master text styles. Use a round bullet.
+for part in [prs.slide_master] + list(prs.slide_layouts):
+    for bu in part._element.iter(qn("a:buChar")):
+        bu.set("char", "•")
 
-# ════════════════════════════════════════════════════════════════════════════
-# SLIDE 12 — METHODOLOGY
-# ════════════════════════════════════════════════════════════════════════════
-sl12 = add_slide()
-slide_header(sl12, "Methodology & Data Quality",
-             "All figures sourced from 12 audited annual report PDFs  |  No paid data vendors")
-footer(sl12, "12 / 12")
-
-method_cols = [
-    ("Data Extraction",
-     ["12 annual report PDFs",
-      "pdfplumber (Python) extraction",
-      "Manual cross-validation per figure",
-      "Source page cited for every KPI"]),
-    ("Data Quality",
-     ["26 pytest assertions",
-      "KPIs re-computed from CSVs",
-      "BS identity check (Assets = L + E)",
-      "NPE ratios: 12/12 PDF-verified"]),
-    ("Financial Models",
-     ["5-step banking DuPont",
-      "CAMELS scoring (1–5 scale)",
-      "Z-score peer benchmarking",
-      "EBA-style single-period stress"]),
-    ("Deliverables",
-     ["SQLite DB + 3 processed CSVs",
-      "Plotly/sql.js browser dashboard",
-      "Streamlit multi-page app (live)",
-      "Excel model + this deck"]),
-]
-
-for ci, (title, bullets) in enumerate(method_cols):
-    cx = 0.35 + ci * 3.2
-    add_rect(sl12, cx, 1.3, 3.0, 0.35, DGREY)
-    add_text(sl12, title, cx+0.1, 1.32, 2.8, 0.3, size=10, bold=True, color=WHITE)
-    for bi, b in enumerate(bullets):
-        add_text(sl12, f"• {b}", cx+0.1, 1.75 + bi*0.45, 2.85, 0.42,
-                 size=9, color=LGREY)
-
-add_rect(sl12, 0.35, 5.0, 12.5, 0.04, BCOLORS_HEX["Eurobank"])
-add_text(sl12,
-    "Known limitations: Annual data only (no quarterly)  ·  NIM uses year-end assets (proxy)  ·  "
-    "Market P/B values are end-2024 estimates  ·  RWA proxy = loans × 50%  ·  Not investment advice.",
-    0.35, 5.1, 12.5, 0.45, size=8.5, color=LGREY)
-
-add_text(sl12,
-    "GitHub:  github.com/papastergiousp-maker/greek-banking-sector-analysis",
-    0.35, 5.65, 8, 0.35, size=9, color=BCOLORS_HEX["Eurobank"])
-add_text(sl12,
-    "Live app:  greek-banking-sector-analysis.streamlit.app",
-    0.35, 6.05, 8, 0.35, size=9, color=BCOLORS_HEX["Eurobank"])
-
-
-# ── Save ──────────────────────────────────────────────────────────────────────
 prs.save(OUT)
 print(f"Written: {OUT}  ({len(prs.slides)} slides)")

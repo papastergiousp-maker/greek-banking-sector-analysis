@@ -43,7 +43,7 @@ tab1, tab2, tab3 = st.tabs(["NII Scenarios 2025–2026", "Stress Test", "Sensiti
 # TAB 1 — NII FORECAST
 # ══════════════════════════════════════════════════════════════════════════════
 with tab1:
-    st.subheader("NII Scenarios 2025–2026 — ECB Deposit Rate")
+    st.subheader("NII Scenarios 2025–2026: ECB Deposit Rate")
     _sens = nim_rate_sensitivity(kpis)
     st.markdown(
         "Method: NII = NIM × average assets. **Rate effect** = each bank's historical NIM sensitivity to the "
@@ -142,7 +142,7 @@ with tab1:
     fig_nii.add_vline(x=2024.5, line_dash="dot", line_color="#475569")
     fig_nii.update_layout(
         **LAYOUT,
-        title=f"NII Scenarios 2025–2026 — {scenario}",
+        title=f"NII Scenarios 2025–2026: {scenario}",
         height=420,
     )
     fig_nii.update_xaxes(tickvals=[2022, 2023, 2024, 2025, 2026])
@@ -277,7 +277,7 @@ with tab2:
         fig_cet.update_layout(
             **LAYOUT,
             barmode="stack",
-            title="CET1 — end-2024 vs end of stress year",
+            title="CET1: end-2024 vs end of stress year",
             height=340,
         )
         fig_cet.update_yaxes(ticksuffix="%", range=[0, 25])
@@ -346,7 +346,7 @@ with tab3:
                          line=dict(color="#f59e0b", width=2))
         fig_pb.update_layout(
             **{k: v for k, v in LAYOUT.items() if k not in ("xaxis", "yaxis")},
-            title=f"{pb_bank} — Justified P/TBV Sensitivity (amber box: CoE 10.0%, g 2.0%)",
+            title=f"{pb_bank}: Justified P/TBV Sensitivity (amber box: CoE 10.0%, g 2.0%)",
             height=340,
             xaxis=dict(title="Cost of Equity (CoE)", tickfont=dict(color="#94a3b8"),
                        gridcolor="#1e293b"),
@@ -409,7 +409,7 @@ with tab3:
                            line=dict(color="#f59e0b", width=2))
         fig_cet1.update_layout(
             **{k: v for k, v in LAYOUT.items() if k not in ("xaxis", "yaxis")},
-            title=f"{cet1_bank} — Stressed CET1 Sensitivity (amber = default: +200bp CoR, −15% loans)",
+            title=f"{cet1_bank}: Stressed CET1 Sensitivity (amber = default: +200bp CoR, −15% loans)",
             height=380,
             xaxis=dict(title="Additional Cost of Risk", tickfont=dict(color="#94a3b8"),
                        gridcolor="#1e293b"),

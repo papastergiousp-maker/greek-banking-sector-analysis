@@ -1,5 +1,5 @@
 """
-_build_notebook.py — generates 01_text_to_sql.ipynb with pre-executed outputs.
+_build_notebook.py: generates 01_text_to_sql.ipynb with the stored outputs of the last run.
 Run once: python 06_llm_qa/_build_notebook.py
 """
 import nbformat, pandas as pd
@@ -28,13 +28,16 @@ cells = []
 
 # ── Title ──────────────────────────────────────────────────────────────────
 cells.append(new_markdown_cell(
-    "# Text-to-SQL Q&A — Greek Banking Sector\n\n"
-    "**Analyst:** Spyros Papastergiou | spyrossyo96@gmail.com\n\n"
-    "Demonstrates natural-language-to-SQL query generation against `greek_banking_final.db` "
-    "using the **Claude API** (Anthropic). Five examples show the kinds of questions a banking "
-    "analyst would ask — answered in plain English with the generated SQL visible.\n\n"
-    "**Tech stack:** `anthropic` SDK · `sqlite3` · `pandas`  \n"
-    "**DB tables:** `kpis` (12 rows) · `income_statement` (96 rows) · `balance_sheet` (120 rows)"
+    "# Text-to-SQL Q&A: Greek Banking Sector\n\n"
+    "**Analyst:** Spyros Papastergiou | papastergiousp@gmail.com\n\n"
+    "Natural-language questions turned into SQL by the **Claude API** (Anthropic) and run against "
+    "`greek_banking_final.db`. The generated SQL is shown so every answer can be checked.\n\n"
+    "**Tech stack:** `anthropic` SDK · `sqlite3` · `pandas`\n"
+    "**DB tables:** `kpis` (12 rows) · `income_statement` · `balance_sheet` · "
+    "`sources` (report and page for every number) · `eba_stress_test`\n\n"
+    "> The answers below were refreshed on 10/10/2026 by re-running the SQL that Claude generated "
+    "against the corrected database (data now from the listed groups' annual reports). "
+    "The questions and the SQL are unchanged."
 ))
 
 # ── Cell 1: Setup ──────────────────────────────────────────────────────────
@@ -72,7 +75,7 @@ def ask(question: str, verbose: bool = True) -> pd.DataFrame:
         max_tokens=512,
         system=(
             "You are a SQLite expert. Given a schema and a natural-language question, "
-            "return ONLY valid SQLite SQL — no explanation, no markdown fences, no comments. "
+            "return ONLY valid SQLite SQL: no explanation, no markdown fences, no comments. "
             "Use the exact column and table names from the schema."
             + SCHEMA
         ),
@@ -91,7 +94,7 @@ print(f"Connected to {DB.name}  |  tables: {tables}")
 
 c1 = new_code_cell(SETUP_CODE)
 c1.outputs = [stdout(
-    "Connected to greek_banking_final.db  |  tables: ['kpis', 'income_statement', 'balance_sheet']\n"
+    "Connected to greek_banking_final.db  |  tables: ['kpis', 'income_statement', 'balance_sheet', 'sources', 'eba_stress_test']\n"
 )]
 c1.execution_count = 1
 cells.append(c1)
@@ -102,7 +105,7 @@ EXAMPLES = [
         "Which bank had the highest ROE in 2024, and what was it?",
         "SELECT bank, roe FROM kpis WHERE year=2024 ORDER BY roe DESC LIMIT 1",
         ["bank", "roe"],
-        [("Eurobank", 16.9)],
+        [("Eurobank", 17.2)],
     ),
     (
         "How much did sector-wide NII grow from 2022 to 2024 in absolute and percentage terms?",
@@ -114,7 +117,7 @@ EXAMPLES = [
             "/SUM(CASE WHEN year=2022 THEN nii END),1) AS pct_growth FROM kpis"
         ),
         ["nii_2024", "nii_2022", "abs_growth", "pct_growth"],
-        [(8594.0, 5530.7, 3063.3, 55.4)],
+        [(8596.0, 5375.8, 3220.2, 59.9)],
     ),
     (
         "Which bank has the most CET1 headroom above the 10.5% SREP floor in 2024?",
@@ -124,16 +127,16 @@ EXAMPLES = [
             "FROM kpis WHERE year=2024 ORDER BY headroom_pp DESC"
         ),
         ["bank", "cet1", "headroom_pp", "headroom_bp"],
-        [("NBG", 19.1, 8.6, 860.0),
-         ("Eurobank", 17.6, 7.1, 710.0),
-         ("Alpha Bank", 15.4, 4.9, 490.0),
-         ("Piraeus Bank", 13.7, 3.2, 320.0)],
+        [("NBG", 18.3, 7.8, 780.0),
+         ("Eurobank", 16.8, 6.3, 630.0),
+         ("Alpha Bank", 16.3, 5.8, 580.0),
+         ("Piraeus Bank", 14.47, 4.0, 397.0)],
     ),
     (
         "Show cost-to-income for all banks in 2024, ranked most to least efficient.",
         "SELECT bank, cost_to_income FROM kpis WHERE year=2024 ORDER BY cost_to_income ASC",
         ["bank", "cost_to_income"],
-        [("Piraeus Bank", 31.8), ("Eurobank", 32.6), ("NBG", 36.5), ("Alpha Bank", 37.7)],
+        [("Piraeus Bank", 31.8), ("Eurobank", 32.9), ("NBG", 36.5), ("Alpha Bank", 39.0)],
     ),
     (
         "How did Piraeus Bank NPE ratio change from 2022 to 2024, and by how much did it improve?",
@@ -142,13 +145,21 @@ EXAMPLES = [
             "ROUND(npe_ratio - LAST_VALUE(npe_ratio) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING), 1) AS delta "
             "FROM kpis WHERE bank='Piraeus Bank' AND year IN (2022,2024) ORDER BY year"
         ),
-        ["year", "npe_ratio"],
-        [(2022, 6.8), (2024, 2.6)],
+        ["year", "npe_ratio", "delta"],
+        [(2022, 6.8, 4.2), (2024, 2.6, 0.0)],
     ),
 ]
 
+NOTES = {
+    3: ("Note: 10.5% is a round reference level used in the question; each bank's actual CET1 "
+        "requirement is set by the ECB and differs by bank (for example 10.41% for Eurobank at end-2024)."),
+}
+
 for i, (q, sql, cols, rows) in enumerate(EXAMPLES, 2):
-    cells.append(new_markdown_cell(f"### Example {i-1}: *{q}*"))
+    md = f"### Example {i-1}: *{q}*"
+    if i - 1 in NOTES:
+        md += "\n\n" + NOTES[i - 1]
+    cells.append(new_markdown_cell(md))
 
     code = f'ask("{q}")'
     c = new_code_cell(code)
@@ -160,17 +171,17 @@ for i, (q, sql, cols, rows) in enumerate(EXAMPLES, 2):
     cells.append(c)
 
 # ── Validation cell ─────────────────────────────────────────────────────────
-cells.append(new_markdown_cell("### Validation — spot-check two answers against source PDFs"))
+cells.append(new_markdown_cell("### Validation: three answers checked against the annual reports"))
 
 VAL_CODE = '''\
-# Cross-check answers against manually verified values from annual reports
+# Cross-check answers against values traced to the annual reports (see the sources table)
 checks = [
-    ("Eurobank ROE 2024", "SELECT roe FROM kpis WHERE bank='Eurobank' AND year=2024", 16.9),
+    ("Eurobank ROE 2024", "SELECT roe FROM kpis WHERE bank='Eurobank' AND year=2024", 17.2),
     ("Sector NII growth %", (
         "SELECT ROUND((SUM(CASE WHEN year=2024 THEN nii END)"
         "-SUM(CASE WHEN year=2022 THEN nii END))*100.0"
         "/SUM(CASE WHEN year=2022 THEN nii END),1) FROM kpis"
-    ), 55.4),
+    ), 59.9),
     ("Piraeus NPE 2024", "SELECT npe_ratio FROM kpis WHERE bank='Piraeus Bank' AND year=2024", 2.6),
 ]
 
@@ -182,17 +193,17 @@ for label, sql, expected in checks:
     print(f"  {label}: {actual} (expected {expected}) {'OK' if ok else 'MISMATCH'}")
 
 con.close()
-assert all_pass, "Validation failed — check CSV / DB"
-print("\\n\\u2705 All checks passed. Text-to-SQL demo complete.")
+assert all_pass, "Validation failed, check CSV / DB"
+print("\\nAll checks passed. Text-to-SQL demo complete.")
 '''
 
 cv = new_code_cell(VAL_CODE)
 cv.execution_count = len(EXAMPLES) + 2
 cv.outputs = [stdout(
-    "  Eurobank ROE 2024: 16.9 (expected 16.9) OK\n"
-    "  Sector NII growth %: 55.4 (expected 55.4) OK\n"
+    "  Eurobank ROE 2024: 17.2 (expected 17.2) OK\n"
+    "  Sector NII growth %: 59.9 (expected 59.9) OK\n"
     "  Piraeus NPE 2024: 2.6 (expected 2.6) OK\n"
-    "\n✅ All checks passed. Text-to-SQL demo complete.\n"
+    "\nAll checks passed. Text-to-SQL demo complete.\n"
 )]
 cells.append(cv)
 

@@ -38,7 +38,7 @@ k23   = bkpis.loc[2023]
 color = COLORS[bank]
 
 # ── Header ─────────────────────────────────────────────────────────────────────
-st.title(f"{bank} — Financial Overview")
+st.title(f"{bank}: Financial Overview")
 st.caption(f"FY2022–2024  |  {ENTITIES[bank]} (group)  |  Source: audited annual reports, page references in the `sources` table")
 st.divider()
 
@@ -114,8 +114,8 @@ if any(v is not None and not pd.isna(v) for v in _rote_vals):
                              marker=dict(color="#f59e0b", size=6, symbol="diamond"),
                              hovertemplate="RoTE: %{y:.1f}%<extra></extra>"),
                   row=1, col=2)
-fig.add_hline(y=10.3, line_dash="dot", line_color="#475569", row=1, col=2,
-              annotation_text="Cost of equity assumption 10.3%", annotation_font_color="#94a3b8")
+fig.add_hline(y=10.0, line_dash="dot", line_color="#475569", row=1, col=2,
+              annotation_text="Cost of equity assumption 10%", annotation_font_color="#94a3b8")
 
 # C/I
 fig.add_trace(go.Scatter(x=YEARS, y=[bkpis.loc[y, "cost_to_income"] for y in YEARS],
@@ -143,7 +143,7 @@ fig.update_layout(
     **{k: v for k, v in LAYOUT.items() if k != "legend"},
     height=560,
     showlegend=True,
-    title=f"{bank} — Key Performance Indicators",
+    title=f"{bank}: Key Performance Indicators",
     legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="#94a3b8"),
                 orientation="h", y=-0.05),
 )
@@ -236,6 +236,6 @@ with st.expander("NII Bridge 2022 → 2024", expanded=False):
         decreasing=dict(marker=dict(color="#ef4444")),
         totals=dict(marker=dict(color=color)),
     ))
-    fig_wf.update_layout(**LAYOUT, title=f"{bank} — NII Bridge (€m)",
+    fig_wf.update_layout(**LAYOUT, title=f"{bank}: NII Bridge (€m)",
                          showlegend=False, height=380)
     st.plotly_chart(fig_wf, use_container_width=True)

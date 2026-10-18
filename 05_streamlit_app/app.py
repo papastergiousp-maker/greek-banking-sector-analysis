@@ -66,9 +66,9 @@ best_cet1_bank = k24["cet1"].idxmax()
 c1.metric("Sector Total Assets", fmt_eur(sector_assets))
 c2.metric("Sector NII (2024)", fmt_eur(sector_nii),
           delta=f"{nii_growth:+.0f}% vs 2022", delta_color="normal")
-c3.metric(f"Highest ROE — {best_roe_bank}",
+c3.metric(f"Highest ROE: {best_roe_bank}",
           pct(k24.loc[best_roe_bank, "roe"]))
-c4.metric(f"Strongest Capital — {best_cet1_bank}",
+c4.metric(f"Strongest Capital: {best_cet1_bank}",
           pct(k24.loc[best_cet1_bank, "cet1"]) + " CET1")
 
 st.divider()
@@ -153,8 +153,8 @@ with col_r:
             marker=dict(size=7),
             hovertemplate=f"<b>{bank}</b><br>ROE: %{{y:.1f}}%<extra></extra>",
         ))
-    fig_roe.add_hline(y=10.3, line_dash="dot", line_color="#475569",
-                      annotation_text="Cost of equity assumption 10.3%",
+    fig_roe.add_hline(y=10.0, line_dash="dot", line_color="#475569",
+                      annotation_text="Cost of equity assumption 10%",
                       annotation_font_color="#94a3b8")
     fig_roe.update_layout(**LAYOUT, title="Return on Equity (%)")
     fig_roe.update_yaxes(ticksuffix="%")
@@ -194,7 +194,7 @@ with col_r2:
             marker=dict(size=7),
             hovertemplate=f"<b>{bank}</b><br>NPE: %{{y:.1f}}%<extra></extra>",
         ))
-    fig_npe.update_layout(**LAYOUT, title="NPE Ratio (%) — lower is better")
+    fig_npe.update_layout(**LAYOUT, title="NPE Ratio (%), lower is better")
     fig_npe.update_yaxes(ticksuffix="%", autorange="reversed")
     fig_npe.update_xaxes(tickvals=YEARS)
     st.plotly_chart(fig_npe, use_container_width=True)

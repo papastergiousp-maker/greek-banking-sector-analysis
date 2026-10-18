@@ -117,7 +117,7 @@ st.markdown("""
 |---|---|
 | Yearly data only | Intra-year rate pass-through cannot be measured |
 | Each bank defines operating income and expenses slightly differently | Cost-to-income ratios are close but not perfectly comparable |
-| CET1 ratios treat dividend accruals differently (e.g. Eurobank's 16.8% is before its FY2024 dividend accrual, 15.7% pro forma) | Small differences in capital comparisons |
+| CET1 ratios treat FY2024 profit and dividends differently (e.g. Eurobank's 16.8% is before its FY2024 dividend accrual; 15.7% pro forma for that accrual and other planned transactions) | Small differences in capital comparisons |
 | Stress test is one year, static, with RWAs unchanged | Directional only; the official EBA 2023 results are shown for context |
 | NII scenarios rest on three yearly points | Rate sensitivity is a rough guide, not a disclosed sensitivity |
 | Valuation uses assumed cost of equity and growth | No market prices are used |
