@@ -6,9 +6,10 @@ Every figure is read with pandas from
 The report and PDF page of each figure are listed in sources.csv in the same folder.
 
 A few results cannot be recomputed from that file (EBA 2023 stress test, ECB funding,
-2022 underlying profit, 2026 NII base case, CAMELS-style composite). They are typed in
-VERIFIED below. Every result that can be recomputed is checked against VERIFIED before
-the workbook is written, so the build stops if the data and the verified values disagree.
+2022 underlying profit). They are typed in VERIFIED below, next to the 2026 NII base case
+and the CAMELS-style composite. Every result that can be recomputed is checked against
+VERIFIED before the workbook is written, so the build stops if the data and the verified
+values disagree.
 
 Run from the deliverables folder:   python3 _build_excel.py
 """
@@ -17,10 +18,12 @@ import sys
 from math import ceil
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.pagebreak import Break
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -28,6 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROCESSED = ROOT / "02_Banking_Sector_Dashboard" / "data" / "processed"
 KPIS_CSV = PROCESSED / "kpis_final.csv"
 SOURCES_CSV = PROCESSED / "sources.csv"
+ECB_RATES_CSV = ROOT / "02_Banking_Sector_Dashboard" / "data" / "manual" / "ecb_deposit_rate.csv"
 OUT = Path(__file__).resolve().parent / "greek_banking_model.xlsx"
 
 BANKS = ["Eurobank", "Alpha Bank", "Piraeus Bank", "NBG"]
@@ -151,6 +155,43 @@ def justified_ptbv(rote):
     return (rote - G) / (COE - G)
 
 
+# Cut-offs of the CAMELS-style score (1 = best, 5 = worst): the project's own, not a supervisory method
+CAMELS_CUTS = {
+    "cet1": ([11.0, 13.0, 15.0, 18.0], "higher"),
+    "npe_ratio": ([2.0, 3.0, 5.0, 8.0], "lower"),
+    "cost_to_income": ([30.0, 37.0, 45.0, 55.0], "lower"),
+    "roe": ([5.0, 8.0, 12.0, 15.0], "higher"),
+    "loan_to_deposit": ([60.0, 65.0, 75.0, 85.0], "lower"),
+}
+
+
+def camels_score(value, cuts, direction):
+    t = sorted(cuts)
+    if direction == "higher":
+        return 1 + sum(value < x for x in reversed(t))
+    return 1 + sum(value > x for x in t)
+
+
+def camels_composite(df24):
+    cols = {m: [camels_score(df24.loc[b, m], *CAMELS_CUTS[m]) for b in BANKS] for m in CAMELS_CUTS}
+    return pd.Series(pd.DataFrame(cols, index=BANKS).mean(axis=1).round(1), index=BANKS)
+
+
+def nii_2026_base_case():
+    """NII 2026 = NIM x average assets. NIM = 2024 NIM + slope x (2026 rate - 2024 rate), the slope being
+    the bank's 2022-2024 regression of NIM on the yearly average ECB deposit rate. Assets grow 2% a year
+    from end-2024. Used only to check the typed base case values."""
+    ecb = pd.read_csv(ECB_RATES_CSV).set_index("year")["dfr_avg"]
+    out = {}
+    for bank in BANKS:
+        b = kpis[kpis.bank == bank].sort_values("year")
+        slope = np.polyfit([ecb[y] for y in YEARS], b["nim"].tolist(), 1)[0]
+        nim26 = b["nim"].iloc[-1] + slope * (2.00 - ecb[2024])
+        assets26 = b["total_assets"].iloc[-1] * 1.02 * 1.01
+        out[bank] = nim26 / 100 * assets26
+    return pd.Series(out)
+
+
 walk = rate_volume_walk(kpis)
 stress = stress_test(k24)
 walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix"]].sum()
@@ -188,6 +229,13 @@ def verify_results():
     assert sum(V["nii_2026_base"].values()) - V["sector_nii_2026_base"] in (0, 1)   # rounding
     assert round((V["sector_nii_2026_base"] / sector.loc[2024, "nii"] - 1) * 100, 1) \
         == V["sector_nii_2026_vs_2024_pct"]
+    base_check = nii_2026_base_case()
+    for bank, v in V["nii_2026_base"].items():
+        assert abs(base_check[bank] - v) <= 0.6, f"NII 2026 base {bank}"
+    assert abs(base_check.sum() - V["sector_nii_2026_base"]) <= 0.6
+    comp = camels_composite(k24)
+    for bank, v in V["camels_2024"].items():
+        assert abs(comp[bank] - v) < 1e-9, f"CAMELS composite {bank}"
 
 
 verify_results()
@@ -684,7 +732,7 @@ def make_analysis():
     for col in (2, 3, 4):
         ws.cell(row=row - 1, column=col).number_format = "0.0"
     note_row(ws, row, "DTC = deferred tax credits: a tax claim on the Greek State that counts in CET1 capital. "
-                      "ECB funding is the amount due to the ECB and central banks at year end (data/manual/ecb_funding.csv, "
+                      "ECB funding is the amount due to the ECB and central banks at year end (02_Banking_Sector_Dashboard/data/manual/ecb_funding.csv, "
                       "report and page in that file); all of the 2024 amount is Alpha's.", last_col)
     row += 2
 
@@ -696,7 +744,7 @@ def make_analysis():
             rows.append([bank, r["delta"], r["rate"], r["volume"], r["mix"]])
         s = walk_sector.loc[yr]
         rows.append(["Sector", s["delta"], s["rate"], s["volume"], s["mix"]])
-        row = add_table(ws, row, f"2. NII RATE AND VOLUME WALK, {yr - 1} TO {yr} (€m)",
+        row = add_table(ws, row, f"2{'A' if yr == 2023 else 'B'}. NII RATE AND VOLUME WALK, {yr - 1} TO {yr} (€m)",
                         ["Bank", "Change in NII", "Rate (margin) effect", "Volume effect", "Mix"], rows,
                         [None, F_INT, F_INT, F_INT, F_INT], bold_last=True)
         row += 1
@@ -706,6 +754,7 @@ def make_analysis():
     row += 1
 
     # 3. Earnings quality
+    ws.row_breaks.append(Break(id=row - 1))
     rows = [
         ["Sector net profit 2022, reported (€m)", sector.loc[2022, "net_profit"]],
         ["Sector net profit 2022, underlying (€m)", VERIFIED["sector_underlying_2022"]],
@@ -728,7 +777,7 @@ def make_analysis():
                     ["Bank", "Net profit FY2024 (€m)", "Stressed net profit (€m)", "CET1 end-2024",
                      "CET1 end of stress year", "Extra cost of risk before a pre-tax loss"], rows,
                     [None, F_INT, F_INT, F_P1, F_P1, F_BP], last_col=7)
-    note_row(ws, row, "Shocks: +200bp cost of risk, −15% loans, −50bp NIM. Costs flat, 29% tax on the change in profit, "
+    note_row(ws, row, "Shocks: cost of risk up 200bp, loans down 15%, NIM down 50bp. Costs flat, 29% tax on the change in profit, "
                       "no dividends, RWAs unchanged. CET1 at the end of the stress year = (reported CET1 ratio × RWAs + "
                       "stressed net profit) / RWAs. A bank that stays profitable ends the year with more CET1 because no "
                       "dividend is paid. Extra cost of risk before a pre-tax loss = FY2024 profit before tax / loans. "
@@ -740,11 +789,12 @@ def make_analysis():
                     ["Bank", "Dec 2022", "Adverse, end-2025", "Change"], rows,
                     [None, F_P1, F_P1, F_PP1])
     note_row(ws, row, "Three-year adverse scenario on the 31.12.2022 balance sheet, as reported by each bank "
-                      "(data/manual/eba_stress_test_2023.csv). Not comparable with the simplified one-year test above.",
+                      "(02_Banking_Sector_Dashboard/data/manual/eba_stress_test_2023.csv). Not comparable with the simplified one-year test above.",
              last_col)
     row += 2
 
     # 5. NII scenarios
+    ws.row_breaks.append(Break(id=row - 1))
     base = VERIFIED["nii_2026_base"]
     rows = [[b, k24.loc[b, "nii"], base[b], base[b] / k24.loc[b, "nii"] - 1] for b in BANKS]
     rows.append(["Sector", sector.loc[2024, "nii"], VERIFIED["sector_nii_2026_base"],
@@ -765,13 +815,14 @@ def make_analysis():
                     ["Bank", "Net profit 2024 (€m)", "Average tangible equity (€m)", "RoTE 2024", "CoE (assumed)",
                      "g (assumed)", "Justified P/TBV"], rows,
                     [None, F_INT, F_INT, F_P1, F_P1, F_P1, F_X])
-    note_row(ws, row, "Justified P/TBV = (RoTE − g) / (CoE − g), with CoE 10% and g 2% as stated assumptions. No market "
+    note_row(ws, row, "Justified P/TBV = (RoTE - g) / (CoE - g), with CoE 10% and g 2% as stated assumptions. No market "
                       "prices are used. A bank that earns exactly its cost of equity is worth 1.0x tangible book value "
                       "in this model. It is a way to read returns, not a price target. Not investment advice.", last_col)
     row += 2
 
     # 7. CAMELS-style composite
-    rows = [[b, VERIFIED["camels_2024"][b]] for b in BANKS]
+    composite = camels_composite(k24)
+    rows = [[b, composite[b]] for b in BANKS]
     row = add_table(ws, row, "7. CAMELS-STYLE COMPOSITE, 2024 (1 = BEST)", ["Bank", "Composite"], rows, [None, "0.0"])
     note_row(ws, row, "Average of five scores (CET1 ratio, NPE ratio, cost-to-income, ROE, loan-to-deposit ratio) on "
                       "the project's own cut-offs. Not a supervisory rating. Source: notebook "
@@ -823,10 +874,10 @@ def make_assumptions():
         ]),
         ("STRESS TEST (ONE YEAR, FY2024 BASE)", "kv", ["Shock", "Value", "Unit", "Note"], [
             ["Additional cost of risk", STRESS["cor_bp"], "bp", "On the loan book"],
-            ["Loan volume", int(STRESS["loans"] * 100), "%", "Earning assets fall by the same amount"],
+            ["Loan volume", round(STRESS["loans"] * 100), "%", "Loans fall by 15%. Average total assets fall by the same euro amount"],
             ["NIM", STRESS["nim_bp"], "bp", "Margin compression"],
             ["Operating costs", "Flat", "", "No cost cutting"],
-            ["Tax", int(STRESS["tax"] * 100), "%", "On the change in profit"],
+            ["Tax", round(STRESS["tax"] * 100), "%", "Applied to the change in profit before tax"],
             ["Dividends", "None", "", "No dividend in the stress year"],
             ["RWAs", "Unchanged", "", "Conservative: a smaller loan book would lower RWAs"],
         ]),
@@ -839,7 +890,7 @@ def make_assumptions():
         ("VALUATION (NOT INVESTMENT ADVICE)", "kv", ["Parameter", "Value", "Unit", "Note"], [
             ["Cost of equity (CoE)", COE, "%", "Stated assumption"],
             ["Long-run growth (g)", G, "%", "Stated assumption"],
-            ["Justified P/TBV", "(RoTE − g) / (CoE − g)", "", "No market prices are used. A way to read returns, not a price target"],
+            ["Justified P/TBV", "(RoTE - g) / (CoE - g)", "", "No market prices are used. A way to read returns, not a price target"],
         ]),
         ("CAMELS-STYLE COMPOSITE", "text", ["Item", "Note"], [
             ["Dimensions", "C: CET1 ratio. A: NPE ratio. M: cost-to-income. E: ROE. L: loan-to-deposit ratio. S is left out"],
@@ -849,7 +900,7 @@ def make_assumptions():
             ["Automated tests", "tests/test_kpis.py recomputes the ratios from the statement lines and checks that assets equal liabilities plus equity"],
             ["Traceability", "sources.csv lists the report file and PDF page of every figure"],
             ["Operating income and expenses", "Each bank's own presentation, so cost-to-income ratios are close but not perfectly comparable"],
-            ["CET1 ratios", "Banks treat dividend accruals differently"],
+            ["CET1 ratios", "Include year-end profit net of the dividend accrual that each bank applies, so they are not perfectly comparable"],
             ["Data frequency", "Yearly only, so intra-year effects cannot be measured"],
         ]),
     ]
