@@ -31,11 +31,17 @@ jobs:
         run: |
           jupyter nbconvert --to notebook --execute --inplace \
             --ExecutePreprocessor.timeout=120 \
+            03_analysis/00_executive_summary.ipynb \
             03_analysis/01_dupont_decomposition.ipynb \
             03_analysis/02_camels_scorecard.ipynb \
             03_analysis/03_peer_benchmarking.ipynb \
+            03_analysis/04_nii_rate_volume_walk.ipynb \
             03_analysis/05_earnings_quality.ipynb \
+            04_forecasting/01_forecast_nii_2025_2026.ipynb \
             04_forecasting/02_stress_test.ipynb
+
+      - name: Smoke-test Streamlit pages
+        run: python 05_streamlit_app/smoke_test.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

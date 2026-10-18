@@ -1,0 +1,5 @@
+bank,cet1_fl_start_2022,cet1_fl_adverse_2025,cet1_fl_baseline_2025,source_file,source_page,note
+Alpha Bank,11.9,8.9,14.1,alpha_holdings_2023.pdf,26,EBA 2023 EU-wide stress test; fully loaded CET1; static balance sheet at 31.12.2022
+Eurobank,14.4,12.2,18.0,eurobank_holdings_2023.pdf,6,
+NBG,15.9,14.5,21.6,nbg_2023.pdf,305,Start = 14.5% + 1.36pp depletion reported by the bank
+Piraeus Bank,11.5,9.1,14.3,pfh_2023.pdf,16,

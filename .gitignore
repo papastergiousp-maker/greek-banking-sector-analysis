@@ -28,3 +28,6 @@ htmlcov/
 # Secrets
 .env
 *.env
+
+# pytest
+.pytest_cache/

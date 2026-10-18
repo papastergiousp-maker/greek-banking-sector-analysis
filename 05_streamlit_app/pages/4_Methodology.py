@@ -9,11 +9,13 @@ sys.path.insert(0, str(Path(__file__).parents[1]))
 import streamlit as st
 import pandas as pd
 
+from utils.data import load_sources
+
 st.set_page_config(page_title="Methodology", page_icon="📋", layout="wide")
 
 with st.sidebar:
     st.markdown("### 📋 Methodology")
-    st.caption("All data sourced exclusively from official annual reports.")
+    st.caption("Every number comes from the banks' annual reports, with its PDF page.")
 
 
 st.title("Methodology & Data Sources")
@@ -22,22 +24,29 @@ st.divider()
 # ── Data sources ───────────────────────────────────────────────────────────────
 st.subheader("Data Sources")
 st.markdown("""
-All financial data was extracted from **12 official annual reports** (4 banks × 3 years, FY2022–FY2024).
-No third-party data vendors, Bloomberg terminals, or paid databases were used.
+The data covers the **four companies listed on the Athens Exchange in 2022–2024**, using their
+consolidated (group) figures from **12 annual reports** (4 groups × FY2022–FY2024):
 
-| Bank | 2022 | 2023 | 2024 |
-|------|------|------|------|
-| Eurobank | Annual Report 2022 | Annual Report 2023 | Annual Report 2024 |
-| Alpha Bank | Annual Report 2022 | Annual Report 2023 | Annual Report 2024 |
-| Piraeus Bank | Annual Report 2022 | Annual Report 2023 | Annual Report 2024 |
-| NBG | Annual Report 2022 | Annual Report 2023 | Annual Report 2024 |
+| Bank | Listed group (2022–2024) | Reports |
+|------|--------------------------|---------|
+| Alpha Bank | Alpha Services and Holdings S.A. | FY2022, FY2023, FY2024 |
+| Eurobank | Eurobank Ergasias Services and Holdings S.A. | FY2022, FY2023, FY2024 |
+| NBG | National Bank of Greece S.A. | FY2022, FY2023, FY2024 |
+| Piraeus Bank | Piraeus Financial Holdings S.A. | FY2022, FY2023, FY2024 |
 
-**Extraction method:** `pdfplumber` (Python) with manual cross-validation of every extracted figure
-against source PDF page numbers. All corrections are documented in the project's
-`data_corrections.md`.
+In 2025 each holding company merged with its bank, so the listed company is now the bank itself.
 
-**ECB rate data:** Historical ECB Deposit Facility Rate averages (approximate) used for macro
-context. No live API connection — rates are hardcoded for reproducibility.
+**Which column of which report:** each year comes from the latest report that contains it, so every
+year-on-year change compares figures prepared the same way. 2024 and 2023 come from the FY2024 report
+(2023 restated), 2022 from the FY2023 report (2022 restated). Regulatory ratios (CET1, total capital,
+NPE ratio, deferred tax credits, RWAs) are as reported at each year end.
+
+**Extraction:** `pipeline/extract_statements.py` reads the consolidated income statement and balance
+sheet pages with `pdfplumber`; the ratios, which sit in the text of the reports, are in
+`data/manual/regulatory_ratios.csv`. Every number in the database has its report and PDF page in the
+`sources` table (below).
+
+**ECB rates:** ECB deposit facility rate, yearly average and year end, from the ECB key interest rates page.
 """)
 
 st.divider()
@@ -46,27 +55,26 @@ st.divider()
 st.subheader("Metric Definitions")
 
 defs = [
-    ("NII", "Net Interest Income", "Interest income minus interest expense. Primary revenue line for Greek banks."),
-    ("NIM", "Net Interest Margin", "NII / Total Assets. Proxy — uses year-end assets, not average earning assets."),
-    ("ROE", "Return on Equity", "Net Profit / Total Equity (year-end). Uses period-end equity; average equity would give marginally higher ROE in growth years."),
-    ("ROE (avg eq.)", "Average-Equity ROE", "Net Profit / [(Equity_t + Equity_{t-1}) / 2]. Industry standard. Not available for 2022 (no 2021 equity data)."),
-    ("RoTE", "Return on Tangible Equity", "Net Profit / (Total Equity − Goodwill − Other Intangibles). Industry standard for European banks. Goodwill + intangibles sourced from investing.com consolidated balance sheets."),
-    ("ROA", "Return on Assets", "Net Profit / Total Assets."),
-    ("C/I", "Cost-to-Income Ratio", "Operating Expenses (absolute) / Operating Income. Lower = more efficient."),
-    ("L/D", "Loan-to-Deposit Ratio", "Gross Loans / Customer Deposits. Liquidity proxy; lower = more liquid."),
-    ("CET1", "CET1 Ratio", "Common Equity Tier 1 / Risk-Weighted Assets. Regulatory capital adequacy measure."),
-    ("SREP Floor", "SREP Minimum CET1", "10.5% minimum CET1 requirement set by ECB Supervisory Review and Evaluation Process for Greek systemic banks."),
-    ("NPE Ratio", "Non-Performing Exposure Ratio", "NPEs / Gross Loans. Extracted from annual reports with pdfplumber; all figures verified to source PDF page."),
-    ("PPOP", "Pre-Provision Operating Profit", "Operating Income minus Operating Expenses (before impairment)."),
-    ("CoR", "Cost of Risk", "Impairment Losses / Gross Loans. Measures credit loss rate on the loan book."),
-    ("DTC", "Deferred Tax Credit", "PSI-era deferred tax assets converted to state-guaranteed credits under Greek Law 4172/2013. Counts toward CET1 but is qualitatively inferior capital. Eurobank 2023/2024 figures confirmed from annual report; other banks estimated from Bloomberg sector total (~€12.5bn mid-2024)."),
-    ("Justified P/B", "Gordon Growth P/B", "(ROE − g) / (CoE − g). CoE = 10.3% (Rf 3.5% + β×ERP 5.5% + CRP 1.3% post-Greek IG upgrade), g = 2%."),
-    ("Justified P/TBV", "Gordon Growth P/TBV", "(RoTE − g) / (CoE − g). Primary institutional metric for European bank valuation. Uses tangible equity denominator."),
-    ("RWA Proxy", "Stress-Test RWA", "Loan book × 0.50 risk weight, consistent with `04_forecasting/02_stress_test.ipynb`. Used to translate Δ profit into Δ CET1 ratio."),
+    ("NII", "Net interest income", "Interest income minus interest expense, as printed."),
+    ("Operating income", "Total operating income", "Each bank's own total income line (e.g. 'Total income from banking operations' for Alpha, 'Total net income' for Piraeus)."),
+    ("Operating expenses", "Operating expenses", "Each bank's total operating expenses line, as printed (NBG: personnel, administrative and depreciation lines added up)."),
+    ("Impairments", "Impairment losses on loans", "Each bank's credit impairment line for loans (Alpha's line also includes provisions for other credit risk)."),
+    ("NIM", "Net interest margin", "NII / average total assets (opening + closing / 2)."),
+    ("ROE", "Return on equity", "Net profit attributable to shareholders / average equity attributable to shareholders."),
+    ("RoTE", "Return on tangible equity", "Net profit attributable / average (equity attributable − AT1 − goodwill and intangibles). AT1 coupons not deducted."),
+    ("ROA", "Return on assets", "Net profit attributable / average total assets."),
+    ("C/I", "Cost-to-income ratio", "Operating expenses / operating income."),
+    ("CoR", "Cost of risk", "Loan impairments / average net loans."),
+    ("L/D", "Loan-to-deposit ratio", "Net loans to customers / customer deposits."),
+    ("CET1", "CET1 ratio", "As reported in each annual report's capital adequacy section (regulatory, transitional)."),
+    ("NPE ratio", "Non-performing exposure ratio", "As reported by each bank."),
+    ("DTC", "Deferred tax credits", "DTAs eligible for conversion into claims on the Greek State (Law 4172/2013), as reported by each bank."),
+    ("DTC / CET1", "DTC share of CET1 capital", "DTC / (CET1 ratio × RWAs). Matches the banks' own disclosures (e.g. Alpha 49%, Eurobank 36% at end-2024)."),
+    ("Justified P/TBV", "Gordon growth multiple", "(RoTE − g) / (CoE − g). Cost of equity and growth are user assumptions."),
 ]
 
-def_df = pd.DataFrame(defs, columns=["Abbreviation", "Full Name", "Definition"])
-st.dataframe(def_df.set_index("Abbreviation"), use_container_width=True, height=580)
+def_df = pd.DataFrame(defs, columns=["Metric", "Full name", "Definition"])
+st.dataframe(def_df.set_index("Metric"), use_container_width=True, height=560)
 
 st.divider()
 
@@ -74,56 +82,49 @@ st.divider()
 st.subheader("Data Pipeline")
 st.markdown("""
 ```
-12 Annual Report PDFs
-        │
-        ▼  (pdfplumber extraction)
-pandas DataFrames
-        │
-        ▼  (tidy-data transforms + manual validation)
-3 processed CSVs
-  ├── kpis_final.csv          (12 rows: 4 banks × 3 years)
-  ├── income_statement_final.csv  (long format)
-  └── balance_sheet_final.csv     (long format)
-        │
-        ▼  (rebuild_db.py)
+12 annual report PDFs (4 listed groups x FY2022-FY2024)
+        |
+        v  pipeline/extract_statements.py   (pdfplumber, 16 statement pages)
+        |  data/manual/regulatory_ratios.csv (ratios, with PDF page)
+        v
+pipeline/build_dataset.py  ->  kpis_final.csv, income_statement_final.csv,
+                               balance_sheet_final.csv, sources.csv
+        |
+        v  rebuild_db.py
 greek_banking_final.db (SQLite)
-        │
-  ┌─────┼──────────────┐
-  ▼     ▼              ▼
-Streamlit  Plotly/sql.js  Power BI
-  App    Dashboard       Dashboard
-        │
-  ┌─────┘
-  ▼
-03_analysis/ notebooks     04_forecasting/ notebooks
-  DuPont · CAMELS            NII Forecast · Stress Test
-  Peer · NII Walk            (basis for this app's
-  Earnings Quality            Forecast & Stress page)
+        |
+   Streamlit app · Plotly/sql.js dashboard · notebooks · Excel model · deck
 ```
 """)
+
+st.divider()
+
+# ── Source browser ─────────────────────────────────────────────────────────────
+st.subheader("Where each number comes from")
+src = load_sources()
+c1, c2 = st.columns(2)
+bank_f = c1.selectbox("Bank", sorted(src["bank"].unique()))
+year_f = c2.selectbox("Year", sorted(src["year"].unique(), reverse=True))
+st.dataframe(src[(src.bank == bank_f) & (src.year == year_f)][["metric", "value", "source", "how"]]
+             .set_index("metric"), use_container_width=True, height=420)
 
 st.divider()
 
 # ── Limitations ────────────────────────────────────────────────────────────────
 st.subheader("Known Limitations")
 st.markdown("""
-| Limitation | Impact | Workaround Used |
-|---|---|---|
-| Annual data only (no quarterly) | Cannot isolate intra-year rate pass-through | Rate sensitivity from bank-specific Pillar 3 IRRBB disclosures (FY2024) |
-| NIM uses year-end assets (not average earning assets) | NIM slightly overstated in growth years | Consistent methodology applied to all banks |
-| Static P/B estimates (~end-2024 prices) | Market prices have moved; justified P/B is directional only | Clearly flagged as approximate in dashboard |
-| RWA proxy (50% loan book risk weight) | Stressed CET1 impact is directional, not precise | Methodology note on every stress output |
-| DTC per-bank estimates (except Eurobank) | ±€200–300m accuracy; impacts DTC/equity ratios | Clearly labelled as estimated; sector total confirmed from Bloomberg |
-| Goodwill + intangibles from investing.com | May differ slightly from annual report notes | Sourced consistently for all 4 banks; used only for RoTE computation |
-| No live ECB rate feed | Forecast scenarios are pre-defined, not live | Three scenarios cover realistic range |
-| Minority interests and one-off items | Tax rate implied from actuals; one-offs partially stripped in `05_earnings_quality.ipynb` | Noted in earnings quality notebook |
+| Limitation | Effect |
+|---|---|
+| Yearly data only | Intra-year rate pass-through cannot be measured |
+| Each bank defines operating income and expenses slightly differently | Cost-to-income ratios are close but not perfectly comparable |
+| CET1 ratios treat dividend accruals differently (e.g. Eurobank's 16.8% is before its FY2024 dividend accrual, 15.7% pro forma) | Small differences in capital comparisons |
+| Stress test is one year, static, with RWAs unchanged | Directional only; the official EBA 2023 results are shown for context |
+| NII scenarios rest on three yearly points | Rate sensitivity is a rough guide, not a disclosed sensitivity |
+| Valuation uses assumed cost of equity and growth | No market prices are used |
 
-**What this analysis is:** A rigorous, reproducible, first-principles financial analysis of four Greek
-systemic banks built entirely from public annual reports. Suitable for equity research context,
-credit analysis, and FP&A purposes.
+**What this analysis is:** a reproducible analysis of the four listed Greek banking groups built from public annual reports.
 
-**What this analysis is not:** Investment advice. Real-money investment decisions require access to
-management guidance, quarterly data, sell-side models, and regulatory filings not available here.
+**What it is not:** investment advice.
 """)
 
 st.divider()
@@ -131,20 +132,13 @@ st.divider()
 # ── Data quality ───────────────────────────────────────────────────────────────
 st.subheader("Data Quality")
 st.markdown("""
-**Automated tests:** 26 pytest assertions verify:
-- ROE, ROA, C/I, L/D, NIM re-computed from raw CSVs match `kpis_final.csv` within ±1%
-- Balance sheet identity: Total Assets ≈ Total Liabilities + Total Equity (within 1%)
-- No nulls in primary key fields (`bank`, `year`)
-- 4 unique banks × 3 unique years = exactly 12 rows
-
-Run: `pytest tests/ -v` from the project root.
-
-**Manual cross-checks:** Every figure was verified against source PDF page numbers.
-Corrections are logged in `memory/data_corrections.md`.
+**Automated tests** (`pytest tests/ -v`) check that:
+- ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit re-computed from the statement lines match `kpis_final.csv`
+- Total assets = total liabilities + total equity for every bank and year
+- Every statement line and ratio has a report and page reference
+- Key figures match the annual reports (e.g. Alpha 2024 net profit €654m, NBG 2024 CET1 18.3%)
+- The DTC share of CET1 matches the banks' own disclosures
 """)
 
 st.divider()
-st.caption(
-    "Greek Banking Sector Analysis 2022–2024 | "
-    "Analyst: Spyros Papastergiou | spyrossyo96@gmail.com"
-)
+st.caption("Greek Banking Sector Analysis 2022–2024 | Analyst: Spyros Papastergiou | papastergiousp@gmail.com")

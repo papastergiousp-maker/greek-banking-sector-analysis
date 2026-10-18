@@ -13,7 +13,7 @@ import pandas as pd
 
 from utils.data import (
     load_kpis, load_income, load_balance,
-    BANKS, YEARS, COLORS, LAYOUT, fmt_eur, pct
+    BANKS, YEARS, COLORS, LAYOUT, ENTITIES, fmt_eur, pct
 )
 
 st.set_page_config(page_title="Bank Deep-Dive", page_icon="🔍", layout="wide")
@@ -22,7 +22,7 @@ with st.sidebar:
     st.markdown("### 🔍 Bank Deep-Dive")
     bank = st.selectbox("Select bank", BANKS)
     st.divider()
-    st.caption("Data sourced from audited annual reports.")
+    st.caption("Consolidated figures of the listed group, from its audited annual reports.")
 
 
 @st.cache_data
@@ -39,7 +39,7 @@ color = COLORS[bank]
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.title(f"{bank} — Financial Overview")
-st.caption("FY2022–2024  |  Source: Audited Annual Reports")
+st.caption(f"FY2022–2024  |  {ENTITIES[bank]} (group)  |  Source: audited annual reports, page references in the `sources` table")
 st.divider()
 
 # ── KPI delta cards — row 1: returns & margin; row 2: capital, profit, credit ──
@@ -53,9 +53,7 @@ r1c1, r1c2, r1c3, r1c4 = st.columns(4)
 r2c1, r2c2, r2c3, r2c4 = st.columns(4)
 
 r1c1.metric("ROE 2024", pct(k24["roe"]), *delta_fmt(k24["roe"], k23["roe"], "%"))
-_roe_avg = k24.get("roe_avg_eq") if hasattr(k24, "get") else (k24["roe_avg_eq"] if "roe_avg_eq" in k24.index else None)
-if _roe_avg is not None and not pd.isna(_roe_avg):
-    r1c1.caption(f"Avg-eq: {_roe_avg:.1f}%")
+r1c1.caption("On average equity")
 
 _rote_val  = k24["rote"]  if "rote"  in k24.index else None
 _rote_prev = k23["rote"]  if "rote"  in k23.index else None
@@ -75,13 +73,9 @@ npe_val  = k24["npe_ratio"] if "npe_ratio" in k24.index else None
 npe_prev = k23["npe_ratio"] if "npe_ratio" in k23.index else None
 r2c3.metric("NPE Ratio", pct(npe_val) if (npe_val is not None and not pd.isna(npe_val)) else "—",
             *delta_fmt(npe_val, npe_prev, "%", invert=True) if (npe_val is not None and npe_prev is not None and not pd.isna(npe_val) and not pd.isna(npe_prev)) else (None, "off"))
-_dtc = k24["dtc"] if "dtc" in k24.index else None
-_dtc_pct = k24["dtc_pct_equity"] if "dtc_pct_equity" in k24.index else None
-_dtc_prev_pct = k23["dtc_pct_equity"] if "dtc_pct_equity" in k23.index else None
-if _dtc is not None and not pd.isna(_dtc):
-    r2c4.metric("DTC / Equity", f"{_dtc_pct:.0f}%" if _dtc_pct is not None else "—",
-                *delta_fmt(_dtc_pct, _dtc_prev_pct, "%", invert=True) if (_dtc_pct is not None and _dtc_prev_pct is not None) else (None, "off"))
-    r2c4.caption(f"€{_dtc:,.0f}m outstanding")
+r2c4.metric("DTC / CET1 capital", f"{k24['dtc_to_cet1']:.0f}%",
+            *delta_fmt(k24["dtc_to_cet1"], k23["dtc_to_cet1"], "%", invert=True))
+r2c4.caption(f"€{k24['dtc']:,.0f}m deferred tax credits (reported)")
 
 st.divider()
 
@@ -105,22 +99,12 @@ fig.add_trace(go.Scatter(x=YEARS, y=[bkpis.loc[y, "nii"] for y in YEARS],
                          hovertemplate="€%{y:,.0f}m<extra></extra>"),
               row=1, col=1)
 
-# ROE (year-end equity — as reported)
+# ROE on average equity
 fig.add_trace(go.Scatter(x=YEARS, y=[bkpis.loc[y, "roe"] for y in YEARS],
-                         mode="lines+markers", name="ROE (YE equity)",
+                         mode="lines+markers", name="ROE",
                          line=line_style, marker=marker_style,
-                         hovertemplate="ROE (YE): %{y:.1f}%<extra></extra>"),
+                         hovertemplate="ROE: %{y:.1f}%<extra></extra>"),
               row=1, col=2)
-# ROE (average equity — industry standard, available 2023–2024 only)
-_roe_avg_yrs = [y for y in YEARS if not pd.isna(bkpis.loc[y, "roe_avg_eq"])]
-_roe_avg_vals = [bkpis.loc[y, "roe_avg_eq"] for y in _roe_avg_yrs]
-if _roe_avg_yrs:
-    fig.add_trace(go.Scatter(x=_roe_avg_yrs, y=_roe_avg_vals,
-                             mode="lines+markers", name="RoE (avg equity)",
-                             line=dict(color=color, width=1.5, dash="dot"),
-                             marker=dict(color=color, size=6, symbol="circle-open"),
-                             hovertemplate="ROE (avg eq): %{y:.1f}%<extra></extra>"),
-                  row=1, col=2)
 # RoTE (tangible equity) — industry standard for European banks
 _rote_vals = [bkpis.loc[y, "rote"] if "rote" in bkpis.columns else None for y in YEARS]
 if any(v is not None and not pd.isna(v) for v in _rote_vals):
@@ -131,7 +115,7 @@ if any(v is not None and not pd.isna(v) for v in _rote_vals):
                              hovertemplate="RoTE: %{y:.1f}%<extra></extra>"),
                   row=1, col=2)
 fig.add_hline(y=10.3, line_dash="dot", line_color="#475569", row=1, col=2,
-              annotation_text="CoE 10.3%", annotation_font_color="#94a3b8")
+              annotation_text="Cost of equity assumption 10.3%", annotation_font_color="#94a3b8")
 
 # C/I
 fig.add_trace(go.Scatter(x=YEARS, y=[bkpis.loc[y, "cost_to_income"] for y in YEARS],
@@ -156,7 +140,7 @@ fig.add_trace(go.Scatter(x=YEARS, y=[bkpis.loc[y, "cet1"] for y in YEARS],
               row=2, col=2)
 
 fig.update_layout(
-    **LAYOUT,
+    **{k: v for k, v in LAYOUT.items() if k != "legend"},
     height=560,
     showlegend=True,
     title=f"{bank} — Key Performance Indicators",
@@ -215,6 +199,9 @@ with st.expander("Balance Sheet (€m)", expanded=False):
         "Due to credit institutions":           "Due to Banks",
         "Deposits from customers":              "Customer Deposits",
         "Total liabilities":                    "Total Liabilities",
+        "Equity attributable to shareholders":  "Equity (shareholders)",
+        "Additional Tier 1 instruments":        "  of which AT1",
+        "Goodwill and intangible assets":       "Goodwill & Intangibles",
         "Total equity":                         "Total Equity",
     }
     bs_rows = []

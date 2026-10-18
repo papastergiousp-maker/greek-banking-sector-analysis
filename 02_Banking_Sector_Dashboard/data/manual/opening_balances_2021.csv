@@ -1,0 +1,21 @@
+bank,year,metric,value,unit,source_file,source_page,note
+Alpha Bank,2021,Total assets,73356.0,€ million,alpha_holdings_2022.pdf,108,31.12.2021 as restated (comparative column)
+Alpha Bank,2021,Equity attributable to shareholders,6035.8,€ million,alpha_holdings_2022.pdf,108,
+Alpha Bank,2021,Loans and advances to customers,36860.4,€ million,alpha_holdings_2022.pdf,108,
+Alpha Bank,2021,Goodwill and intangible assets,478.2,€ million,alpha_holdings_2022.pdf,108,
+Alpha Bank,2021,Additional Tier 1 instruments,0.0,€ million,alpha_holdings_2022.pdf,108,No AT1 at 31.12.2021
+Eurobank,2021,Total assets,77852.0,€ million,eurobank_holdings_2022.pdf,98,
+Eurobank,2021,Equity attributable to shareholders,5539.0,€ million,eurobank_holdings_2022.pdf,98,
+Eurobank,2021,Loans and advances to customers,38967.0,€ million,eurobank_holdings_2022.pdf,98,
+Eurobank,2021,Goodwill and intangible assets,269.0,€ million,eurobank_holdings_2022.pdf,98,
+Eurobank,2021,Additional Tier 1 instruments,0.0,€ million,eurobank_holdings_2022.pdf,98,No AT1
+NBG,2021,Total assets,83958.0,€ million,nbg_2022.pdf,184,
+NBG,2021,Equity attributable to shareholders,5750.0,€ million,nbg_2022.pdf,184,
+NBG,2021,Loans and advances to customers,30439.0,€ million,nbg_2022.pdf,184,
+NBG,2021,Goodwill and intangible assets,353.0,€ million,nbg_2022.pdf,184,Software
+NBG,2021,Additional Tier 1 instruments,0.0,€ million,nbg_2022.pdf,184,No AT1
+Piraeus Bank,2021,Total assets,79789.0,€ million,pfh_2022.pdf,119,
+Piraeus Bank,2021,Equity attributable to shareholders,5788.0,€ million,pfh_2022.pdf,119,
+Piraeus Bank,2021,Loans and advances to customers,36598.0,€ million,pfh_2022.pdf,119,Amortised cost 36521 + FVTPL 77
+Piraeus Bank,2021,Goodwill and intangible assets,267.0,€ million,pfh_2022.pdf,119,
+Piraeus Bank,2021,Additional Tier 1 instruments,600.0,€ million,pfh_2022.pdf,119,

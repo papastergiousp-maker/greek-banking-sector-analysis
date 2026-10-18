@@ -13,6 +13,7 @@ from plotly.subplots import make_subplots
 from utils.data import (
     load_kpis, BANKS, YEARS, COLORS, LAYOUT, fmt_eur, pct
 )
+import pandas as pd
 
 st.set_page_config(
     page_title="Greek Banking Sector Analysis",
@@ -26,11 +27,12 @@ with st.sidebar:
     st.markdown("### 🏦 Greek Banking 2022–2024")
     st.caption("Eurobank · Alpha Bank · Piraeus Bank · NBG")
     st.divider()
-    st.caption("Data sourced from audited annual reports.\n"
+    st.caption("Consolidated figures of the four listed groups, from their "
+               "audited annual reports. Every number is traced to a PDF page.\n"
                "All figures in € millions unless stated.")
     st.divider()
     st.caption("**Analyst:** Spyros Papastergiou\n\n"
-               "📧 spyrossyo96@gmail.com")
+               "papastergiousp@gmail.com")
 
 
 @st.cache_data
@@ -40,13 +42,17 @@ def get_kpis():
 
 kpis = get_kpis()
 k24  = kpis[kpis.year == 2024].set_index("bank")
+k23  = kpis[kpis.year == 2023].set_index("bank")
+nii_by_year = kpis.groupby("year")["nii"].sum()
+nii_growth = (nii_by_year[2024] / nii_by_year[2022] - 1) * 100
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.title("Greek Banking Sector Analysis 2022–2024")
 st.markdown(
-    "Four systemic Greek banks — Eurobank, Alpha Bank, Piraeus, NBG — "
-    "analysed from official annual report PDFs. "
-    "Sector NII grew **+55%** over 2022–2024 driven by ECB rate hikes."
+    "The four listed Greek banking groups (Alpha Services and Holdings, Eurobank Holdings, "
+    "National Bank of Greece, Piraeus Financial Holdings), analysed from their annual reports. "
+    f"Sector net interest income grew **{nii_growth:+.0f}%** from 2022 to 2024, almost all of it in 2023 "
+    "with the ECB rate hikes."
 )
 st.divider()
 
@@ -59,7 +65,7 @@ best_cet1_bank = k24["cet1"].idxmax()
 
 c1.metric("Sector Total Assets", fmt_eur(sector_assets))
 c2.metric("Sector NII (2024)", fmt_eur(sector_nii),
-          delta="+55% vs 2022", delta_color="normal")
+          delta=f"{nii_growth:+.0f}% vs 2022", delta_color="normal")
 c3.metric(f"Highest ROE — {best_roe_bank}",
           pct(k24.loc[best_roe_bank, "roe"]))
 c4.metric(f"Strongest Capital — {best_cet1_bank}",
@@ -148,7 +154,7 @@ with col_r:
             hovertemplate=f"<b>{bank}</b><br>ROE: %{{y:.1f}}%<extra></extra>",
         ))
     fig_roe.add_hline(y=10.3, line_dash="dot", line_color="#475569",
-                      annotation_text="CoE 10.3%",
+                      annotation_text="Cost of equity assumption 10.3%",
                       annotation_font_color="#94a3b8")
     fig_roe.update_layout(**LAYOUT, title="Return on Equity (%)")
     fig_roe.update_yaxes(ticksuffix="%")
@@ -198,21 +204,24 @@ st.divider()
 # ── Key insight callout ────────────────────────────────────────────────────────
 st.subheader("Key Takeaways")
 cols = st.columns(3)
+nbg, eb, pb = k24.loc["NBG"], k24.loc["Eurobank"], k24.loc["Piraeus Bank"]
+pb_np_at_2023_cor = pb["net_profit"] - (k23.loc["Piraeus Bank", "cost_of_risk"] / 100 * pb["avg_loans"]
+                                        + pb["impairment"]) * (1 - 0.29)
 cols[0].info(
-    "**Rate cycle winner: NBG**\n\n"
-    "NIM of 3.14% (highest in peer group) and 860bp of CET1 headroom above "
-    "SREP floor position NBG as the most defensively positioned bank into the "
-    "ECB rate-cutting cycle."
+    "**Highest margin and capital: NBG**\n\n"
+    f"NIM {nbg['nim']:.2f}% of average assets and CET1 {nbg['cet1']:.1f}%, both the highest of the four, "
+    f"with the lowest loan-to-deposit ratio ({nbg['loan_to_deposit']:.1f}%). "
+    "A cheap deposit base drives the margin, which also makes NBG the most exposed to ECB cuts."
 )
 cols[1].success(
-    "**Quality compounder: Eurobank**\n\n"
-    "ROE 16.9% / RoTE 17.9% — highest in peer group. Justified P/TBV ~1.9× "
-    "(CoE 10.3%, g 2%) vs market ~1.2×: widest upside gap in the sector. "
-    "Hellenic Bank consolidation adds Cypriot franchise and €27bn asset base."
+    "**Best returns: Eurobank**\n\n"
+    f"ROE {eb['roe']:.1f}% and RoTE {eb['rote']:.1f}%, the highest in 2024. "
+    f"Hellenic Bank lifted total assets by {eb['assets_yoy']:.0f}% in 2024. "
+    f"DTCs are {eb['dtc_to_cet1']:.0f}% of its CET1 capital, the lowest share of the four."
 )
 cols[2].warning(
-    "**Watch: Piraeus CoR risk**\n\n"
-    "2024 profit (+35% YoY) included ~€165m after-tax impairment benefit "
-    "from sales of NPE portfolios. Underlying earnings growth was ~+14%. "
-    "CET1 of 13.7% leaves only 320bp above the SREP floor — tightest in sector."
+    "**Watch: Piraeus provisions**\n\n"
+    f"Net profit rose {pb['profit_yoy']:.0f}% in 2024 as cost of risk fell to {pb['cost_of_risk']:.2f}% "
+    f"from {k23.loc['Piraeus Bank', 'cost_of_risk']:.2f}%. At the 2023 cost of risk, 2024 net profit would be about "
+    f"€{pb_np_at_2023_cor:,.0f}m. CET1 {pb['cet1']:.1f}% is the lowest of the four."
 )

@@ -1,0 +1,61 @@
+bank,year,metric,value,unit,source_file,source_page,note
+Alpha Bank,2022,cet1_ratio,13.2,%,alpha_holdings_2022.pdf,24,Group CET1 as reported (IFRS 9 transitional); fully loaded 11.9%
+Alpha Bank,2023,cet1_ratio,14.4,%,alpha_holdings_2023.pdf,397,Group capital adequacy table; includes profit after dividend provision
+Alpha Bank,2024,cet1_ratio,16.3,%,alpha_holdings_2024.pdf,387,Group capital adequacy table; includes profit after dividend provision
+Alpha Bank,2022,total_capital_ratio,16.2,%,alpha_holdings_2023.pdf,397,Comparative column of the FY2023 table
+Alpha Bank,2023,total_capital_ratio,18.8,%,alpha_holdings_2023.pdf,397,
+Alpha Bank,2024,total_capital_ratio,21.9,%,alpha_holdings_2024.pdf,387,
+Alpha Bank,2022,npe_ratio,7.8,%,alpha_holdings_2022.pdf,22,Management report: single digit NPE ratio (7.8%) on 31.12.2022
+Alpha Bank,2023,npe_ratio,6.0,%,alpha_holdings_2023.pdf,23,Management report: NPE ratio reduced to 6%
+Alpha Bank,2024,npe_ratio,3.8,%,alpha_holdings_2024.pdf,21,Management report
+Alpha Bank,2022,dtc,2700.0,€ million,alpha_holdings_2022.pdf,24,DTAs eligible for conversion to tax credit (Euro 2.7 billion)
+Alpha Bank,2023,dtc,2600.0,€ million,alpha_holdings_2023.pdf,27,Euro 2.6 billion; 55.5% of Group CET1
+Alpha Bank,2024,dtc,2400.0,€ million,alpha_holdings_2024.pdf,23,Euro 2.4 billion; 49.2% of Group CET1
+Alpha Bank,2022,rwa,34300.0,€ million,alpha_holdings_2022.pdf,24,Euro 34.3 billion
+Alpha Bank,2023,rwa,32200.0,€ million,alpha_holdings_2023.pdf,25,Euro 32.2 billion
+Alpha Bank,2024,rwa,30300.0,€ million,alpha_holdings_2024.pdf,23,Euro 30.3 billion
+Eurobank,2022,cet1_ratio,16.0,%,eurobank_holdings_2022.pdf,6,Group CET1 as reported; fully loaded 15.2%
+Eurobank,2023,cet1_ratio,16.9,%,eurobank_holdings_2023.pdf,6,
+Eurobank,2024,cet1_ratio,16.8,%,eurobank_holdings_2024.pdf,6,Before the FY2024 dividend accrual; pro forma 15.7%
+Eurobank,2022,total_capital_ratio,19.2,%,eurobank_holdings_2022.pdf,6,
+Eurobank,2023,total_capital_ratio,19.4,%,eurobank_holdings_2023.pdf,6,
+Eurobank,2024,total_capital_ratio,19.5,%,eurobank_holdings_2024.pdf,6,
+Eurobank,2022,npe_ratio,5.2,%,eurobank_holdings_2022.pdf,5,
+Eurobank,2023,npe_ratio,3.5,%,eurobank_holdings_2023.pdf,4,
+Eurobank,2024,npe_ratio,2.9,%,eurobank_holdings_2024.pdf,5,Excludes Hellenic Bank NPEs covered by the Cyprus Asset Protection Scheme
+Eurobank,2022,dtc,3402.0,€ million,eurobank_holdings_2022.pdf,6,Eligible DTAs for conversion to tax credits
+Eurobank,2023,dtc,3212.0,€ million,eurobank_holdings_2023.pdf,6,
+Eurobank,2024,dtc,3022.0,€ million,eurobank_holdings_2024.pdf,6,36% of CET1 capital
+Eurobank,2022,rwa,41899.0,€ million,eurobank_holdings_2022.pdf,146,Capital management note
+Eurobank,2023,rwa,43395.0,€ million,eurobank_holdings_2023.pdf,194,Capital management note
+Eurobank,2024,rwa,49977.0,€ million,eurobank_holdings_2024.pdf,303,Capital management note
+NBG,2022,cet1_ratio,16.6,%,nbg_2022.pdf,32,Key ratios table
+NBG,2023,cet1_ratio,17.8,%,nbg_2023.pdf,32,Key ratios table
+NBG,2024,cet1_ratio,18.3,%,nbg_2024.pdf,40,Includes FY2024 profit with a 50% payout provision
+NBG,2022,total_capital_ratio,17.7,%,nbg_2022.pdf,32,
+NBG,2023,total_capital_ratio,20.2,%,nbg_2024.pdf,40,Comparative column of the FY2024 table
+NBG,2024,total_capital_ratio,21.2,%,nbg_2024.pdf,40,
+NBG,2022,npe_ratio,5.2,%,nbg_2022.pdf,32,
+NBG,2023,npe_ratio,3.7,%,nbg_2023.pdf,32,
+NBG,2024,npe_ratio,2.6,%,nbg_2024.pdf,40,
+NBG,2022,dtc,3900.0,€ million,nbg_2023.pdf,305,Comparative in the FY2023 report (EUR 3.9 billion)
+NBG,2023,dtc,3700.0,€ million,nbg_2023.pdf,305,EUR 3.7 billion
+NBG,2024,dtc,3500.0,€ million,nbg_2024.pdf,446,EUR 3.5 billion
+NBG,2022,rwa,36400.0,€ million,nbg_2022.pdf,32,EUR 36.4 billion
+NBG,2023,rwa,37700.0,€ million,nbg_2023.pdf,32,EUR 37.7 billion
+NBG,2024,rwa,37400.0,€ million,nbg_2024.pdf,40,EUR 37.4 billion
+Piraeus Bank,2022,cet1_ratio,13.04,%,pfh_2022.pdf,251,Group capital adequacy table
+Piraeus Bank,2023,cet1_ratio,13.21,%,pfh_2023.pdf,304,Group capital adequacy table
+Piraeus Bank,2024,cet1_ratio,14.47,%,pfh_2024.pdf,566,Includes FY2024 profit
+Piraeus Bank,2022,total_capital_ratio,17.82,%,pfh_2022.pdf,251,
+Piraeus Bank,2023,total_capital_ratio,17.77,%,pfh_2023.pdf,304,
+Piraeus Bank,2024,total_capital_ratio,19.67,%,pfh_2024.pdf,566,
+Piraeus Bank,2022,npe_ratio,6.8,%,pfh_2022.pdf,104,
+Piraeus Bank,2023,npe_ratio,3.5,%,pfh_2023.pdf,127,
+Piraeus Bank,2024,npe_ratio,2.6,%,pfh_2024.pdf,433,
+Piraeus Bank,2022,dtc,3541.0,€ million,pfh_2022.pdf,252,DTA eligible for Deferred Tax Credit
+Piraeus Bank,2023,dtc,3303.0,€ million,pfh_2023.pdf,305,EUR 3.3bn included in regulatory capital (FY2023 report p.22)
+Piraeus Bank,2024,dtc,3119.0,€ million,pfh_2024.pdf,567,"DTC included in regulatory capital: EUR 3,248m eligible DTA (p.568) less a EUR 128m prudential amortisation adjustment"
+Piraeus Bank,2022,rwa,31178.0,€ million,pfh_2022.pdf,251,
+Piraeus Bank,2023,rwa,32765.0,€ million,pfh_2023.pdf,304,
+Piraeus Bank,2024,rwa,34098.0,€ million,pfh_2024.pdf,566,

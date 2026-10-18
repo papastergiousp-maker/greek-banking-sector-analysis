@@ -1,100 +1,160 @@
-bank,year,metric,value,unit
-Alpha Bank,2022,Cash and balances with central banks,12894.8,€ million
-Alpha Bank,2022,Deposits from customers,50256.6,€ million
-Alpha Bank,2022,Due from credit institutions,1368.1,€ million
-Alpha Bank,2022,Due to credit institutions,14345.1,€ million
-Alpha Bank,2022,Investment securities,12710.1,€ million
-Alpha Bank,2022,Loans and advances to customers,38746.9,€ million
-Alpha Bank,2022,Total assets,77200.6,€ million
-Alpha Bank,2022,Total equity,6199.6,€ million
-Alpha Bank,2022,Total liabilities,71001.0,€ million
-Alpha Bank,2023,Cash and balances with central banks,4219.1,€ million
-Alpha Bank,2023,Deposits from customers,48468.8,€ million
-Alpha Bank,2023,Due from credit institutions,1722.5,€ million
-Alpha Bank,2023,Due to credit institutions,7093.0,€ million
-Alpha Bank,2023,Investment securities,15993.8,€ million
-Alpha Bank,2023,Loans and advances to customers,36180.9,€ million
-Alpha Bank,2023,Total assets,72694.1,€ million
-Alpha Bank,2023,Total equity,7288.7,€ million
-Alpha Bank,2023,Total liabilities,65405.4,€ million
-Alpha Bank,2024,Cash and balances with central banks,2998.0,€ million
-Alpha Bank,2024,Deposits from customers,51063.0,€ million
-Alpha Bank,2024,Due from credit institutions,2296.0,€ million
-Alpha Bank,2024,Due to credit institutions,6533.0,€ million
-Alpha Bank,2024,Investment securities,17574.0,€ million
-Alpha Bank,2024,Loans and advances to customers,39070.0,€ million
-Alpha Bank,2024,Total assets,70954.0,€ million
-Alpha Bank,2024,Total equity,8155.0,€ million
-Alpha Bank,2024,Total liabilities,62799.0,€ million
-Eurobank,2022,Cash and balances with central banks,14994.0,€ million
-Eurobank,2022,Deposits from customers,57297.0,€ million
-Eurobank,2022,Due from credit institutions,1329.0,€ million
-Eurobank,2022,Due to central banks,8774.0,€ million
-Eurobank,2022,Due to credit institutions,1814.0,€ million
-Eurobank,2022,Investment securities,13261.0,€ million
-Eurobank,2022,Loans and advances to customers,41677.0,€ million
-Eurobank,2022,Total assets,81471.0,€ million
-Eurobank,2022,Total equity,6667.0,€ million
-Eurobank,2022,Total liabilities,74804.0,€ million
-Eurobank,2023,Cash and balances with central banks,10943.0,€ million
-Eurobank,2023,Deposits from customers,57842.0,€ million
-Eurobank,2023,Due from credit institutions,2354.0,€ million
-Eurobank,2023,Due to central banks,3771.0,€ million
-Eurobank,2023,Due to credit institutions,3078.0,€ million
-Eurobank,2023,Investment securities,14710.0,€ million
-Eurobank,2023,Loans and advances to customers,41576.0,€ million
-Eurobank,2023,Total assets,79815.0,€ million
-Eurobank,2023,Total equity,7532.0,€ million
-Eurobank,2023,Total liabilities,72283.0,€ million
-Eurobank,2024,Cash and balances with central banks,16131.0,€ million
-Eurobank,2024,Deposits from customers,78860.0,€ million
-Eurobank,2024,Due from credit institutions,2196.0,€ million
-Eurobank,2024,Due to central banks,0.0,€ million
-Eurobank,2024,Due to credit institutions,2800.0,€ million
-Eurobank,2024,Investment securities,22184.0,€ million
-Eurobank,2024,Loans and advances to customers,50953.0,€ million
-Eurobank,2024,Total assets,101151.0,€ million
-Eurobank,2024,Total equity,8636.0,€ million
-Eurobank,2024,Total liabilities,92515.0,€ million
-NBG,2022,Cash and balances with central banks,14226.0,€ million
-NBG,2022,Deposits from customers,55192.0,€ million
-NBG,2022,Due to credit institutions,9811.0,€ million
-NBG,2022,Loans and advances to customers,35561.0,€ million
-NBG,2022,Total assets,78113.0,€ million
-NBG,2022,Total equity,6475.0,€ million
-NBG,2022,Total liabilities,71638.0,€ million
-NBG,2023,Cash and balances with central banks,9015.0,€ million
-NBG,2023,Deposits from customers,57126.0,€ million
-NBG,2023,Due to credit institutions,3800.0,€ million
-NBG,2023,Loans and advances to customers,34223.0,€ million
-NBG,2023,Total assets,74584.0,€ million
-NBG,2023,Total equity,7652.0,€ million
-NBG,2023,Total liabilities,66932.0,€ million
-NBG,2024,Cash and balances with central banks,5380.0,€ million
-NBG,2024,Deposits from customers,57593.0,€ million
-NBG,2024,Due to credit institutions,1665.0,€ million
-NBG,2024,Loans and advances to customers,36139.0,€ million
-NBG,2024,Total assets,74957.0,€ million
-NBG,2024,Total equity,8452.0,€ million
-NBG,2024,Total liabilities,66505.0,€ million
-Piraeus Bank,2022,Cash and balances with central banks,9653.0,€ million
-Piraeus Bank,2022,Deposits from customers,58372.0,€ million
-Piraeus Bank,2022,Due to credit institutions,6185.0,€ million
-Piraeus Bank,2022,Loans and advances to customers,37367.0,€ million
-Piraeus Bank,2022,Total assets,75403.0,€ million
-Piraeus Bank,2022,Total equity,6512.0,€ million
-Piraeus Bank,2022,Total liabilities,68891.0,€ million
-Piraeus Bank,2023,Cash and balances with central banks,10567.0,€ million
-Piraeus Bank,2023,Deposits from customers,59567.0,€ million
-Piraeus Bank,2023,Due to credit institutions,4618.0,€ million
-Piraeus Bank,2023,Loans and advances to customers,37527.0,€ million
-Piraeus Bank,2023,Total assets,76450.0,€ million
-Piraeus Bank,2023,Total equity,7353.0,€ million
-Piraeus Bank,2023,Total liabilities,69097.0,€ million
-Piraeus Bank,2024,Cash and balances with central banks,7423.0,€ million
-Piraeus Bank,2024,Deposits from customers,62853.0,€ million
-Piraeus Bank,2024,Due to credit institutions,2378.0,€ million
-Piraeus Bank,2024,Loans and advances to customers,40685.0,€ million
-Piraeus Bank,2024,Total assets,80044.0,€ million
-Piraeus Bank,2024,Total equity,8273.0,€ million
-Piraeus Bank,2024,Total liabilities,71771.0,€ million
+bank,year,metric,value,unit,source_ref
+Alpha Bank,2022,Additional Tier 1 instruments,0.0,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Cash and balances with central banks,12894.8,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Deposits from customers,50760.9,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Due from credit institutions,1368.1,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Due to credit institutions,14344.9,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Equity attributable to shareholders,6244.9,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Goodwill and intangible assets,474.7,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Investment securities,13470.2,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Loans and advances to customers,38747.5,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Non-controlling interests,18.4,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Total assets,78011.4,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Total equity,6263.3,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2022,Total liabilities,71748.1,€ million,alpha_holdings_2023.pdf p.152
+Alpha Bank,2023,Additional Tier 1 instruments,400.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Cash and balances with central banks,4219.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Deposits from customers,48449.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Due from credit institutions,1572.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Due to credit institutions,6921.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Equity attributable to shareholders,7305.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Goodwill and intangible assets,467.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Investment securities,16018.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Loans and advances to customers,36161.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Non-controlling interests,18.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Total assets,72421.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Total equity,7323.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2023,Total liabilities,65098.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Additional Tier 1 instruments,700.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Cash and balances with central banks,2998.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Deposits from customers,51032.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Due from credit institutions,2296.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Due to credit institutions,6533.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Equity attributable to shareholders,8173.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Goodwill and intangible assets,438.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Investment securities,17596.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Loans and advances to customers,39050.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Non-controlling interests,16.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Total assets,72075.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Total equity,8189.0,€ million,alpha_holdings_2024.pdf p.248
+Alpha Bank,2024,Total liabilities,63886.0,€ million,alpha_holdings_2024.pdf p.248
+Eurobank,2022,Additional Tier 1 instruments,0.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Cash and balances with central banks,14994.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Deposits from customers,57239.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Due from credit institutions,1329.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Due to central banks,8774.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Due to credit institutions,10588.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Equity attributable to shareholders,6637.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Goodwill and intangible assets,297.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Investment securities,13261.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Loans and advances to customers,41677.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Non-controlling interests,95.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Total assets,81474.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Total equity,6732.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2022,Total liabilities,74742.0,€ million,eurobank_holdings_2023.pdf p.146
+Eurobank,2023,Additional Tier 1 instruments,0.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Cash and balances with central banks,10943.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Deposits from customers,57442.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Due from credit institutions,2354.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Due to central banks,3771.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Due to credit institutions,6849.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Equity attributable to shareholders,7899.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Goodwill and intangible assets,334.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Investment securities,14710.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Loans and advances to customers,41545.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Non-controlling interests,0.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Total assets,79781.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Total equity,7899.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2023,Total liabilities,71882.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Additional Tier 1 instruments,0.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Cash and balances with central banks,16131.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Deposits from customers,78593.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Due from credit institutions,2196.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Due to central banks,0.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Due to credit institutions,2800.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Equity attributable to shareholders,8899.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Goodwill and intangible assets,415.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Investment securities,22184.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Loans and advances to customers,50953.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Non-controlling interests,0.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Total assets,101150.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Total equity,8899.0,€ million,eurobank_holdings_2024.pdf p.255
+Eurobank,2024,Total liabilities,92251.0,€ million,eurobank_holdings_2024.pdf p.255
+NBG,2022,Additional Tier 1 instruments,0.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Cash and balances with central banks,14226.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Deposits from customers,55192.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Due from credit institutions,2900.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Due to credit institutions,9811.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Equity attributable to shareholders,6452.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Goodwill and intangible assets,431.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Investment securities,13190.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Loans and advances to customers,35561.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Non-controlling interests,23.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Total assets,78113.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Total equity,6475.0,€ million,nbg_2023.pdf p.241
+NBG,2022,Total liabilities,71638.0,€ million,nbg_2023.pdf p.241
+NBG,2023,Additional Tier 1 instruments,0.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Cash and balances with central banks,9015.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Deposits from customers,57126.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Due from credit institutions,2793.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Due to credit institutions,3800.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Equity attributable to shareholders,7626.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Goodwill and intangible assets,524.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Investment securities,16494.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Loans and advances to customers,34223.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Non-controlling interests,26.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Total assets,74584.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Total equity,7652.0,€ million,nbg_2024.pdf p.366
+NBG,2023,Total liabilities,66932.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Additional Tier 1 instruments,0.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Cash and balances with central banks,5380.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Deposits from customers,57593.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Due from credit institutions,2679.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Due to credit institutions,1665.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Equity attributable to shareholders,8423.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Goodwill and intangible assets,626.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Investment securities,19526.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Loans and advances to customers,36139.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Non-controlling interests,29.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Total assets,74957.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Total equity,8452.0,€ million,nbg_2024.pdf p.366
+NBG,2024,Total liabilities,66505.0,€ million,nbg_2024.pdf p.366
+Piraeus Bank,2022,Additional Tier 1 instruments,600.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Cash and balances with central banks,9653.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Deposits from customers,58372.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Due from credit institutions,1415.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Due to credit institutions,6185.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Equity attributable to shareholders,6553.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Goodwill and intangible assets,312.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Investment securities,11741.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Loans and advances to customers,37419.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Non-controlling interests,28.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Total assets,74645.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Total equity,6581.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2022,Total liabilities,68064.0,€ million,pfh_2023.pdf p.174
+Piraeus Bank,2023,Additional Tier 1 instruments,600.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Cash and balances with central banks,10567.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Deposits from customers,59567.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Due from credit institutions,1034.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Due to credit institutions,4618.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Equity attributable to shareholders,7298.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Goodwill and intangible assets,347.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Investment securities,13042.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Loans and advances to customers,37580.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Non-controlling interests,56.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Total assets,76450.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Total equity,7353.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2023,Total liabilities,69097.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Additional Tier 1 instruments,600.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Cash and balances with central banks,7423.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Deposits from customers,62853.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Due from credit institutions,2352.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Due to credit institutions,2378.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Equity attributable to shareholders,8217.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Goodwill and intangible assets,417.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Investment securities,15601.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Loans and advances to customers,40735.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Non-controlling interests,56.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Total assets,80044.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Total equity,8273.0,€ million,pfh_2024.pdf p.425
+Piraeus Bank,2024,Total liabilities,71771.0,€ million,pfh_2024.pdf p.425

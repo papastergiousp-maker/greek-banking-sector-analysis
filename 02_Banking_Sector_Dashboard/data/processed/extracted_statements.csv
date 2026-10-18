@@ -1,0 +1,233 @@
+bank,year,statement,metric,value,source_file,source_page,source_label
+Alpha Bank,2022,IS,Net interest income,1173.8,alpha_holdings_2023.pdf,150,"Net interest income 2 1,653,450 1,173,819"
+Alpha Bank,2022,IS,Net banking fee and commission income,367.1,alpha_holdings_2023.pdf,150,"Net fee and commission income 3 372,461 367,062"
+Alpha Bank,2022,IS,Operating income,1750.8,alpha_holdings_2023.pdf,150,"Total income from banking operations 2,122,601 1,750,833"
+Alpha Bank,2022,IS,Operating expenses,-856.7,alpha_holdings_2023.pdf,150,"Total expenses (817,073) (856,702)"
+Alpha Bank,2022,IS,Impairment losses on loans,-476.7,alpha_holdings_2023.pdf,150,"Impairment losses and provisions to cover credit risk 10 (381,027) (476,718)"
+Alpha Bank,2022,IS,Profit before tax,543.9,alpha_holdings_2023.pdf,150,"Profit/(loss) before income tax 773,113 543,880"
+Alpha Bank,2022,IS,Net profit attributable to shareholders,368.1,alpha_holdings_2023.pdf,150,"Equity Holders of the Company 611,022 368,103"
+Alpha Bank,2022,BS,Cash and balances with central banks,12894.8,alpha_holdings_2023.pdf,152,"Cash and balances with central banks 18 4,219,137 12,894,774"
+Alpha Bank,2022,BS,Due from credit institutions,1368.1,alpha_holdings_2023.pdf,152,"Due from banks 19 1,722,471 1,368,135"
+Alpha Bank,2022,BS,Loans and advances to customers,38747.5,alpha_holdings_2023.pdf,152,"Loans and advances to customers 22 36,160,603 38,747,512"
+Alpha Bank,2022,BS,Investment securities,13470.2,alpha_holdings_2023.pdf,152,"- Measured at fair value through other comprehensive income 23a 1,369,003 1,806,445 / - Measured at amortized cost 23b 14,490,352 11,336,249 / - Measured at fair value through profit or loss 23c 159,301 327,506"
+Alpha Bank,2022,BS,Goodwill and intangible assets,474.7,alpha_holdings_2023.pdf,152,"Goodwill and other intangible assets 27 466,570 474,683"
+Alpha Bank,2022,BS,Total assets,78011.4,alpha_holdings_2023.pdf,152,"Total Assets 73,662,810 78,011,430"
+Alpha Bank,2022,BS,Due to credit institutions,14344.9,alpha_holdings_2023.pdf,152,"Due to banks 30 7,092,908 14,344,851"
+Alpha Bank,2022,BS,Deposits from customers,50760.9,alpha_holdings_2023.pdf,152,"Due to customers 31 48,448,908 50,760,889"
+Alpha Bank,2022,BS,Total liabilities,71748.1,alpha_holdings_2023.pdf,152,"Total Liabilities 66,339,499 71,748,112"
+Alpha Bank,2022,BS,Additional Tier 1 instruments,0.0,alpha_holdings_2023.pdf,152,"Other Εquity Ιnstruments 40 400,000 -"
+Alpha Bank,2022,BS,Non-controlling interests,18.4,alpha_holdings_2023.pdf,152,"Non-controlling interests 18,308 18,370"
+Alpha Bank,2022,BS,Total equity,6263.3,alpha_holdings_2023.pdf,152,"Total Equity 7,323,311 6,263,318"
+Alpha Bank,2024,IS,Net interest income,1645.0,alpha_holdings_2024.pdf,246,"Net interest income 3 1,645 1,659"
+Alpha Bank,2023,IS,Net interest income,1659.0,alpha_holdings_2024.pdf,246,"Net interest income 3 1,645 1,659"
+Alpha Bank,2024,IS,Net banking fee and commission income,420.0,alpha_holdings_2024.pdf,246,Net fee and commission income 4 420 374
+Alpha Bank,2023,IS,Net banking fee and commission income,374.0,alpha_holdings_2024.pdf,246,Net fee and commission income 4 420 374
+Alpha Bank,2024,IS,Operating income,2222.0,alpha_holdings_2024.pdf,246,"Total income from banking operations 2,222 2,129"
+Alpha Bank,2023,IS,Operating income,2129.0,alpha_holdings_2024.pdf,246,"Total income from banking operations 2,222 2,129"
+Alpha Bank,2024,IS,Operating expenses,-866.0,alpha_holdings_2024.pdf,246,Total expenses (866) (815)
+Alpha Bank,2023,IS,Operating expenses,-815.0,alpha_holdings_2024.pdf,246,Total expenses (866) (815)
+Alpha Bank,2024,IS,Impairment losses on loans,-360.0,alpha_holdings_2024.pdf,246,Impairment losses and provisions to cover credit risk 11 (360) (381)
+Alpha Bank,2023,IS,Impairment losses on loans,-381.0,alpha_holdings_2024.pdf,246,Impairment losses and provisions to cover credit risk 11 (360) (381)
+Alpha Bank,2024,IS,Profit before tax,816.0,alpha_holdings_2024.pdf,246,Profit/(loss) before income tax 816 780
+Alpha Bank,2023,IS,Profit before tax,780.0,alpha_holdings_2024.pdf,246,Profit/(loss) before income tax 816 780
+Alpha Bank,2024,IS,Net profit attributable to shareholders,654.0,alpha_holdings_2024.pdf,246,Equity Holders of the Company 654 618
+Alpha Bank,2023,IS,Net profit attributable to shareholders,618.0,alpha_holdings_2024.pdf,246,Equity Holders of the Company 654 618
+Alpha Bank,2024,BS,Cash and balances with central banks,2998.0,alpha_holdings_2024.pdf,248,"Cash and balances with central banks 19 2,998 4,219"
+Alpha Bank,2023,BS,Cash and balances with central banks,4219.0,alpha_holdings_2024.pdf,248,"Cash and balances with central banks 19 2,998 4,219"
+Alpha Bank,2024,BS,Due from credit institutions,2296.0,alpha_holdings_2024.pdf,248,"Due from financial institutions 20 2,296 1,572"
+Alpha Bank,2023,BS,Due from credit institutions,1572.0,alpha_holdings_2024.pdf,248,"Due from financial institutions 20 2,296 1,572"
+Alpha Bank,2024,BS,Loans and advances to customers,39050.0,alpha_holdings_2024.pdf,248,"Loans and advances to customers 23 39,050 36,161"
+Alpha Bank,2023,BS,Loans and advances to customers,36161.0,alpha_holdings_2024.pdf,248,"Loans and advances to customers 23 39,050 36,161"
+Alpha Bank,2024,BS,Investment securities,17596.0,alpha_holdings_2024.pdf,248,"- Measured at fair value through other comprehensive income 24a 1,009 1,369 / - Measured at amortized cost 24b 16,420 14,490 / - Measured at fair value through profit or loss 24c 167 159"
+Alpha Bank,2023,BS,Investment securities,16018.0,alpha_holdings_2024.pdf,248,"- Measured at fair value through other comprehensive income 24a 1,009 1,369 / - Measured at amortized cost 24b 16,420 14,490 / - Measured at fair value through profit or loss 24c 167 159"
+Alpha Bank,2024,BS,Goodwill and intangible assets,438.0,alpha_holdings_2024.pdf,248,Goodwill and other intangible assets 28 438 467
+Alpha Bank,2023,BS,Goodwill and intangible assets,467.0,alpha_holdings_2024.pdf,248,Goodwill and other intangible assets 28 438 467
+Alpha Bank,2024,BS,Total assets,72075.0,alpha_holdings_2024.pdf,248,"Total Assets 72,075 72,421"
+Alpha Bank,2023,BS,Total assets,72421.0,alpha_holdings_2024.pdf,248,"Total Assets 72,075 72,421"
+Alpha Bank,2024,BS,Due to credit institutions,6533.0,alpha_holdings_2024.pdf,248,"Due to banks 31 6,533 6,921"
+Alpha Bank,2023,BS,Due to credit institutions,6921.0,alpha_holdings_2024.pdf,248,"Due to banks 31 6,533 6,921"
+Alpha Bank,2024,BS,Deposits from customers,51032.0,alpha_holdings_2024.pdf,248,"Due to customers 32 51,032 48,449"
+Alpha Bank,2023,BS,Deposits from customers,48449.0,alpha_holdings_2024.pdf,248,"Due to customers 32 51,032 48,449"
+Alpha Bank,2024,BS,Total liabilities,63886.0,alpha_holdings_2024.pdf,248,"Total Liabilities 63,886 65,098"
+Alpha Bank,2023,BS,Total liabilities,65098.0,alpha_holdings_2024.pdf,248,"Total Liabilities 63,886 65,098"
+Alpha Bank,2024,BS,Additional Tier 1 instruments,700.0,alpha_holdings_2024.pdf,248,Other Εquity Ιnstruments 40 700 400
+Alpha Bank,2023,BS,Additional Tier 1 instruments,400.0,alpha_holdings_2024.pdf,248,Other Εquity Ιnstruments 40 700 400
+Alpha Bank,2024,BS,Non-controlling interests,16.0,alpha_holdings_2024.pdf,248,Non-controlling interests 16 18
+Alpha Bank,2023,BS,Non-controlling interests,18.0,alpha_holdings_2024.pdf,248,Non-controlling interests 16 18
+Alpha Bank,2024,BS,Total equity,8189.0,alpha_holdings_2024.pdf,248,"Total Equity 8,189 7,323"
+Alpha Bank,2023,BS,Total equity,7323.0,alpha_holdings_2024.pdf,248,"Total Equity 8,189 7,323"
+Eurobank,2022,IS,Net interest income,1480.0,eurobank_holdings_2023.pdf,147,"Net interest income 6 2,174 1,480"
+Eurobank,2022,IS,Net banking fee and commission income,427.0,eurobank_holdings_2023.pdf,147,Net banking fee and commission income 7 447 427
+Eurobank,2022,IS,Operating income,3041.0,eurobank_holdings_2023.pdf,147,"Operating income 2,914 3,041"
+Eurobank,2022,IS,Operating expenses,-857.0,eurobank_holdings_2023.pdf,147,Operating expenses 11 (915) (857)
+Eurobank,2022,IS,Impairment losses on loans,-276.0,eurobank_holdings_2023.pdf,147,Impairment losses relating to loans and / advances to customers 21 (412) (276)
+Eurobank,2022,IS,Profit before tax,1751.0,eurobank_holdings_2023.pdf,147,"Profit before tax from continuing operations 1,542 1,751"
+Eurobank,2022,IS,Net profit attributable to shareholders,1347.0,eurobank_holdings_2023.pdf,147,"Net profit attributable to shareholders 1,140 1,347"
+Eurobank,2022,BS,Cash and balances with central banks,14994.0,eurobank_holdings_2023.pdf,146,"Cash and balances with central banks 15 10,943 14,994"
+Eurobank,2022,BS,Due from credit institutions,1329.0,eurobank_holdings_2023.pdf,146,"Due from credit institutions 17 2,354 1,329"
+Eurobank,2022,BS,Loans and advances to customers,41677.0,eurobank_holdings_2023.pdf,146,"Loans and advances to customers 20 41,545 41,677"
+Eurobank,2022,BS,Investment securities,13261.0,eurobank_holdings_2023.pdf,146,"Investment securities 22 14,710 13,261"
+Eurobank,2022,BS,Goodwill and intangible assets,297.0,eurobank_holdings_2023.pdf,146,Intangible assets 28 334 297
+Eurobank,2022,BS,Total assets,81474.0,eurobank_holdings_2023.pdf,146,"Total assets 79,781 81,474"
+Eurobank,2022,BS,Due to central banks,8774.0,eurobank_holdings_2023.pdf,146,"Due to central banks 31 3,771 8,774"
+Eurobank,2022,BS,Due to credit institutions only,1814.0,eurobank_holdings_2023.pdf,146,"Due to credit institutions 32 3,078 1,814"
+Eurobank,2022,BS,Deposits from customers,57239.0,eurobank_holdings_2023.pdf,146,"Due to customers 33 57,442 57,239"
+Eurobank,2022,BS,Total liabilities,74742.0,eurobank_holdings_2023.pdf,146,"Total liabilities 71,882 74,742"
+Eurobank,2022,BS,Equity attributable to shareholders,6637.0,eurobank_holdings_2023.pdf,146,"Equity attributable to shareholders of the Company 7,899 6,637"
+Eurobank,2022,BS,Non-controlling interests,95.0,eurobank_holdings_2023.pdf,146,Non controlling interests 0 95
+Eurobank,2022,BS,Total equity,6732.0,eurobank_holdings_2023.pdf,146,"Total equity 7,899 6,732"
+Eurobank,2024,IS,Net interest income,2507.0,eurobank_holdings_2024.pdf,256,"Net interest income 6 2,507 2,174"
+Eurobank,2023,IS,Net interest income,2174.0,eurobank_holdings_2024.pdf,256,"Net interest income 6 2,507 2,174"
+Eurobank,2024,IS,Net banking fee and commission income,561.0,eurobank_holdings_2024.pdf,256,Net banking fee and commission income 7 561 447
+Eurobank,2023,IS,Net banking fee and commission income,447.0,eurobank_holdings_2024.pdf,256,Net banking fee and commission income 7 561 447
+Eurobank,2024,IS,Operating income,3341.0,eurobank_holdings_2024.pdf,256,"Operating income 3,341 2,914"
+Eurobank,2023,IS,Operating income,2914.0,eurobank_holdings_2024.pdf,256,"Operating income 3,341 2,914"
+Eurobank,2024,IS,Operating expenses,-1099.0,eurobank_holdings_2024.pdf,256,"Operating expenses 11 (1,099) (915)"
+Eurobank,2023,IS,Operating expenses,-915.0,eurobank_holdings_2024.pdf,256,"Operating expenses 11 (1,099) (915)"
+Eurobank,2024,IS,Impairment losses on loans,-303.0,eurobank_holdings_2024.pdf,256,Impairment losses relating to loans and / advances to customers 21 (303) (412)
+Eurobank,2023,IS,Impairment losses on loans,-412.0,eurobank_holdings_2024.pdf,256,Impairment losses relating to loans and / advances to customers 21 (303) (412)
+Eurobank,2024,IS,Profit before tax,1872.0,eurobank_holdings_2024.pdf,256,"Profit before tax from continuing operations 1,872 1,542"
+Eurobank,2023,IS,Profit before tax,1542.0,eurobank_holdings_2024.pdf,256,"Profit before tax from continuing operations 1,872 1,542"
+Eurobank,2024,IS,Net profit attributable to shareholders,1448.0,eurobank_holdings_2024.pdf,256,"Net profit attributable to shareholders 1,448 1,140"
+Eurobank,2023,IS,Net profit attributable to shareholders,1140.0,eurobank_holdings_2024.pdf,256,"Net profit attributable to shareholders 1,448 1,140"
+Eurobank,2024,BS,Cash and balances with central banks,16131.0,eurobank_holdings_2024.pdf,255,"Cash and balances with central banks 15 16,131 10,943"
+Eurobank,2023,BS,Cash and balances with central banks,10943.0,eurobank_holdings_2024.pdf,255,"Cash and balances with central banks 15 16,131 10,943"
+Eurobank,2024,BS,Due from credit institutions,2196.0,eurobank_holdings_2024.pdf,255,"Due from credit institutions 17 2,196 2,354"
+Eurobank,2023,BS,Due from credit institutions,2354.0,eurobank_holdings_2024.pdf,255,"Due from credit institutions 17 2,196 2,354"
+Eurobank,2024,BS,Loans and advances to customers,50953.0,eurobank_holdings_2024.pdf,255,"Loans and advances to customers 20 50,953 41,545"
+Eurobank,2023,BS,Loans and advances to customers,41545.0,eurobank_holdings_2024.pdf,255,"Loans and advances to customers 20 50,953 41,545"
+Eurobank,2024,BS,Investment securities,22184.0,eurobank_holdings_2024.pdf,255,"Investment securities 22 22,184 14,710"
+Eurobank,2023,BS,Investment securities,14710.0,eurobank_holdings_2024.pdf,255,"Investment securities 22 22,184 14,710"
+Eurobank,2024,BS,Goodwill and intangible assets,415.0,eurobank_holdings_2024.pdf,255,Intangible assets 28 415 334
+Eurobank,2023,BS,Goodwill and intangible assets,334.0,eurobank_holdings_2024.pdf,255,Intangible assets 28 415 334
+Eurobank,2024,BS,Total assets,101150.0,eurobank_holdings_2024.pdf,255,"Total assets 101,150 79,781"
+Eurobank,2023,BS,Total assets,79781.0,eurobank_holdings_2024.pdf,255,"Total assets 101,150 79,781"
+Eurobank,2024,BS,Due to central banks,0.0,eurobank_holdings_2024.pdf,255,"Due to central banks 31 - 3,771"
+Eurobank,2023,BS,Due to central banks,3771.0,eurobank_holdings_2024.pdf,255,"Due to central banks 31 - 3,771"
+Eurobank,2024,BS,Due to credit institutions only,2800.0,eurobank_holdings_2024.pdf,255,"Due to credit institutions 32 2,800 3,078"
+Eurobank,2023,BS,Due to credit institutions only,3078.0,eurobank_holdings_2024.pdf,255,"Due to credit institutions 32 2,800 3,078"
+Eurobank,2024,BS,Deposits from customers,78593.0,eurobank_holdings_2024.pdf,255,"Due to customers 33 78,593 57,442"
+Eurobank,2023,BS,Deposits from customers,57442.0,eurobank_holdings_2024.pdf,255,"Due to customers 33 78,593 57,442"
+Eurobank,2024,BS,Total liabilities,92251.0,eurobank_holdings_2024.pdf,255,"Total liabilities 92,251 71,882"
+Eurobank,2023,BS,Total liabilities,71882.0,eurobank_holdings_2024.pdf,255,"Total liabilities 92,251 71,882"
+Eurobank,2024,BS,Non-controlling interests,0.0,eurobank_holdings_2024.pdf,255,"(not shown, taken as 0)"
+Eurobank,2023,BS,Non-controlling interests,0.0,eurobank_holdings_2024.pdf,255,"(not shown, taken as 0)"
+Eurobank,2024,BS,Total equity,8899.0,eurobank_holdings_2024.pdf,255,"Total equity 8,899 7,899"
+Eurobank,2023,BS,Total equity,7899.0,eurobank_holdings_2024.pdf,255,"Total equity 8,899 7,899"
+NBG,2022,IS,Net interest income,1369.0,nbg_2023.pdf,242,"Net interest income 6 2,263 1,369 2,117 1,250"
+NBG,2022,IS,Net banking fee and commission income,347.0,nbg_2023.pdf,242,Net fee and commission income 7 382 347 343 311
+NBG,2022,IS,Operating income,2355.0,nbg_2023.pdf,242,"Total income 2,760 2,355 2,554 2,180"
+NBG,2022,IS,Operating expenses,-855.0,nbg_2023.pdf,242,"Personnel expenses 10 (485) (475) (448) (439) / Administrative and other operating expenses 12 (255) (208) (227) (178) / Depreciation and amortisation on investment property, property & equipment 23, 25, / and software 26 (188) (172) (172) (155)"
+NBG,2022,IS,Impairment losses on loans,-217.0,nbg_2023.pdf,242,Credit provisions 13 (268) (217) (251) (185)
+NBG,2022,IS,Profit before tax,1155.0,nbg_2023.pdf,242,"Profit before tax 1,479 1,155 1,377 1,089"
+NBG,2022,IS,Net profit attributable to shareholders,1120.0,nbg_2023.pdf,242,"NBG equity shareholders 1,106 1,120 1,020 813"
+NBG,2022,BS,Cash and balances with central banks,14226.0,nbg_2023.pdf,241,"Cash and balances with central banks 17 9,015 14,226 8,615 13,957"
+NBG,2022,BS,Due from credit institutions,2900.0,nbg_2023.pdf,241,"Due from banks 18 2,793 2,900 2,779 2,854"
+NBG,2022,BS,Loans and advances to customers,35561.0,nbg_2023.pdf,241,"Loans and advances to customers 21 34,223 35,561 32,219 33,782"
+NBG,2022,BS,Investment securities,13190.0,nbg_2023.pdf,241,"Investment securities 22 16,494 13,190 16,170 12,905"
+NBG,2022,BS,Goodwill and intangible assets,431.0,nbg_2023.pdf,241,Software 25 524 431 516 424
+NBG,2022,BS,Total assets,78113.0,nbg_2023.pdf,241,"Total assets 74,584 78,113 72,069 75,816"
+NBG,2022,BS,Due to credit institutions,9811.0,nbg_2023.pdf,241,"Due to banks 30 3,800 9,811 3,832 10,027"
+NBG,2022,BS,Deposits from customers,55192.0,nbg_2023.pdf,241,"Due to customers 31 57,126 55,192 55,582 53,704"
+NBG,2022,BS,Total liabilities,71638.0,nbg_2023.pdf,241,"Total liabilities 66,932 71,638 65,098 69,933"
+NBG,2022,BS,Equity attributable to shareholders,6452.0,nbg_2023.pdf,241,"Equity attributable to NBG shareholders 7,626 6,452 6,971 5,883"
+NBG,2022,BS,Non-controlling interests,23.0,nbg_2023.pdf,241,Non-controlling interests 39 26 23 - -
+NBG,2022,BS,Total equity,6475.0,nbg_2023.pdf,241,"Total equity 7,652 6,475 6,971 5,883"
+NBG,2024,IS,Net interest income,2356.0,nbg_2024.pdf,367,"Net interest income 6 2,356 2,263 2,198 2,117"
+NBG,2023,IS,Net interest income,2263.0,nbg_2024.pdf,367,"Net interest income 6 2,356 2,263 2,198 2,117"
+NBG,2024,IS,Net banking fee and commission income,427.0,nbg_2024.pdf,367,Net fee and commission income 7 427 382 383 343
+NBG,2023,IS,Net banking fee and commission income,382.0,nbg_2024.pdf,367,Net fee and commission income 7 427 382 383 343
+NBG,2024,IS,Operating income,2885.0,nbg_2024.pdf,367,"Total income 2,885 2,760 2,756 2,554"
+NBG,2023,IS,Operating income,2760.0,nbg_2024.pdf,367,"Total income 2,885 2,760 2,756 2,554"
+NBG,2024,IS,Operating expenses,-1053.0,nbg_2024.pdf,367,"Personnel expenses 10 (581) (485) (540) (448) / Administrative and other operating expenses 12 (286) (255) (255) (227) / Depreciation and amortisation on investment property, 23, 25 / (186) (188) (176) (172)"
+NBG,2023,IS,Operating expenses,-928.0,nbg_2024.pdf,367,"Personnel expenses 10 (581) (485) (540) (448) / Administrative and other operating expenses 12 (286) (255) (255) (227) / Depreciation and amortisation on investment property, 23, 25 / (186) (188) (176) (172)"
+NBG,2024,IS,Impairment losses on loans,-180.0,nbg_2024.pdf,367,Credit provisions 13 (180) (268) (163) (251)
+NBG,2023,IS,Impairment losses on loans,-268.0,nbg_2024.pdf,367,Credit provisions 13 (180) (268) (163) (251)
+NBG,2024,IS,Profit before tax,1517.0,nbg_2024.pdf,367,"Profit before tax 1,517 1,479 1,488 1,377"
+NBG,2023,IS,Profit before tax,1479.0,nbg_2024.pdf,367,"Profit before tax 1,517 1,479 1,488 1,377"
+NBG,2024,IS,Net profit attributable to shareholders,1158.0,nbg_2024.pdf,367,"NBG equity shareholders 1,158 1,106 1,148 1,020"
+NBG,2023,IS,Net profit attributable to shareholders,1106.0,nbg_2024.pdf,367,"NBG equity shareholders 1,158 1,106 1,148 1,020"
+NBG,2024,BS,Cash and balances with central banks,5380.0,nbg_2024.pdf,366,"Cash and balances with Central Banks 17 5,380 9,015 4,997 8,615"
+NBG,2023,BS,Cash and balances with central banks,9015.0,nbg_2024.pdf,366,"Cash and balances with Central Banks 17 5,380 9,015 4,997 8,615"
+NBG,2024,BS,Due from credit institutions,2679.0,nbg_2024.pdf,366,"Due from banks 18 2,679 2,793 2,969 2,779"
+NBG,2023,BS,Due from credit institutions,2793.0,nbg_2024.pdf,366,"Due from banks 18 2,679 2,793 2,969 2,779"
+NBG,2024,BS,Loans and advances to customers,36139.0,nbg_2024.pdf,366,"Loans and advances to customers 21 36,139 34,223 33,354 32,219"
+NBG,2023,BS,Loans and advances to customers,34223.0,nbg_2024.pdf,366,"Loans and advances to customers 21 36,139 34,223 33,354 32,219"
+NBG,2024,BS,Investment securities,19526.0,nbg_2024.pdf,366,"Investment securities 22 19,526 16,494 19,105 16,170"
+NBG,2023,BS,Investment securities,16494.0,nbg_2024.pdf,366,"Investment securities 22 19,526 16,494 19,105 16,170"
+NBG,2024,BS,Goodwill and intangible assets,626.0,nbg_2024.pdf,366,Software 25 626 524 616 516
+NBG,2023,BS,Goodwill and intangible assets,524.0,nbg_2024.pdf,366,Software 25 626 524 616 516
+NBG,2024,BS,Total assets,74957.0,nbg_2024.pdf,366,"Total assets 74,957 74,584 72,092 72,069"
+NBG,2023,BS,Total assets,74584.0,nbg_2024.pdf,366,"Total assets 74,957 74,584 72,092 72,069"
+NBG,2024,BS,Due to credit institutions,1665.0,nbg_2024.pdf,366,"Due to banks 30 1,665 3,800 1,689 3,832"
+NBG,2023,BS,Due to credit institutions,3800.0,nbg_2024.pdf,366,"Due to banks 30 1,665 3,800 1,689 3,832"
+NBG,2024,BS,Deposits from customers,57593.0,nbg_2024.pdf,366,"Due to customers 31 57,593 57,126 55,723 55,582"
+NBG,2023,BS,Deposits from customers,57126.0,nbg_2024.pdf,366,"Due to customers 31 57,593 57,126 55,723 55,582"
+NBG,2024,BS,Total liabilities,66505.0,nbg_2024.pdf,366,"Total liabilities 66,505 66,932 64,337 65,098"
+NBG,2023,BS,Total liabilities,66932.0,nbg_2024.pdf,366,"Total liabilities 66,505 66,932 64,337 65,098"
+NBG,2024,BS,Equity attributable to shareholders,8423.0,nbg_2024.pdf,366,"Equity attributable to NBG shareholders 8,423 7,626 7,755 6,971"
+NBG,2023,BS,Equity attributable to shareholders,7626.0,nbg_2024.pdf,366,"Equity attributable to NBG shareholders 8,423 7,626 7,755 6,971"
+NBG,2024,BS,Non-controlling interests,29.0,nbg_2024.pdf,366,Non-controlling interests 39 29 26 - -
+NBG,2023,BS,Non-controlling interests,26.0,nbg_2024.pdf,366,Non-controlling interests 39 29 26 - -
+NBG,2024,BS,Total equity,8452.0,nbg_2024.pdf,366,"Total equity 8,452 7,652 7,755 6,971"
+NBG,2023,BS,Total equity,7652.0,nbg_2024.pdf,366,"Total equity 8,452 7,652 7,755 6,971"
+Piraeus Bank,2022,IS,Net interest income,1353.0,pfh_2023.pdf,172,"NET INTEREST INCOME 2,003 1,353 34 37"
+Piraeus Bank,2022,IS,Net banking fee and commission income,421.0,pfh_2023.pdf,172,NET FEE AND COMMISSION INCOME 468 421 12 14
+Piraeus Bank,2022,IS,Operating income,2582.0,pfh_2023.pdf,172,"TOTAL NET INCOME 2,607 2,582 98 94"
+Piraeus Bank,2022,IS,Operating expenses,-889.0,pfh_2023.pdf,172,TOTAL OPERATING EXPENSES (863) (889) (10) (8)
+Piraeus Bank,2022,IS,Impairment losses on loans,-472.0,pfh_2023.pdf,172,Impairment (losses) / releases on loans and advances to customers at amortised cost 4 (404
+Piraeus Bank,2022,IS,Profit before tax,1037.0,pfh_2023.pdf,172,"PROFIT BEFORE INCOME TAX 1,078 1,037 101 103"
+Piraeus Bank,2022,IS,Net profit attributable to shareholders,950.0,pfh_2023.pdf,172,Profit attributable to the equity holders of the parent 788 899 - - / Profit attributable to the equity holders of the parent - 51 - -
+Piraeus Bank,2022,BS,Cash and balances with central banks,9653.0,pfh_2023.pdf,174,"Cash and balances with Central Banks 19 10,567 9,653 - -"
+Piraeus Bank,2022,BS,Due from credit institutions,1415.0,pfh_2023.pdf,174,"Due from banks 20 1,034 1,415 34 45"
+Piraeus Bank,2022,BS,Loans and advances to customers,37419.0,pfh_2023.pdf,174,"Loans and advances to customers at amortised cost 23 37,527 37,367 - - / Loans and advances to customers mandatorily measured at FVTPL 53 52 - -"
+Piraeus Bank,2022,BS,Investment securities,11741.0,pfh_2023.pdf,174,"Investment securities 24 13,042 11,741 850 798"
+Piraeus Bank,2022,BS,Goodwill and intangible assets,312.0,pfh_2023.pdf,174,Intangible assets 26 347 312 - -
+Piraeus Bank,2022,BS,Total assets,74645.0,pfh_2023.pdf,174,"TOTAL ASSETS 76,450 74,645 6,503 6,457"
+Piraeus Bank,2022,BS,Due to credit institutions,6185.0,pfh_2023.pdf,174,"Due to banks 31 4,618 6,185 - -"
+Piraeus Bank,2022,BS,Deposits from customers,58372.0,pfh_2023.pdf,174,"Due to customers 32 59,567 58,372 - -"
+Piraeus Bank,2022,BS,Total liabilities,68064.0,pfh_2023.pdf,174,"TOTAL LIABILITIES 69,097 68,064 999 992"
+Piraeus Bank,2022,BS,Additional Tier 1 instruments,600.0,pfh_2023.pdf,174,Οther equity instruments 600 600 600 600
+Piraeus Bank,2022,BS,Equity attributable to shareholders,6553.0,pfh_2023.pdf,174,"Capital and reserves attributable to the equity holders of the parent 7,298 6,553 5,503 5,"
+Piraeus Bank,2022,BS,Non-controlling interests,28.0,pfh_2023.pdf,174,Non controlling interest 56 28 - -
+Piraeus Bank,2022,BS,Total equity,6581.0,pfh_2023.pdf,174,"TOTAL EQUITY 7,353 6,581 5,503 5,465"
+Piraeus Bank,2024,IS,Net interest income,2088.0,pfh_2024.pdf,423,"NET INTEREST INCOME 2,088 2,003 24 34"
+Piraeus Bank,2023,IS,Net interest income,2003.0,pfh_2024.pdf,423,"NET INTEREST INCOME 2,088 2,003 24 34"
+Piraeus Bank,2024,IS,Net banking fee and commission income,561.0,pfh_2024.pdf,423,NET FEE AND COMMISSION INCOME 561 468 13 12
+Piraeus Bank,2023,IS,Net banking fee and commission income,468.0,pfh_2024.pdf,423,NET FEE AND COMMISSION INCOME 561 468 13 12
+Piraeus Bank,2024,IS,Operating income,2757.0,pfh_2024.pdf,423,"TOTAL NET INCOME 2,757 2,607 128 98"
+Piraeus Bank,2023,IS,Operating income,2607.0,pfh_2024.pdf,423,"TOTAL NET INCOME 2,757 2,607 128 98"
+Piraeus Bank,2024,IS,Operating expenses,-877.0,pfh_2024.pdf,423,TOTAL OPERATING EXPENSES (877) (863) (10) (10)
+Piraeus Bank,2023,IS,Operating expenses,-863.0,pfh_2024.pdf,423,TOTAL OPERATING EXPENSES (877) (863) (10) (10)
+Piraeus Bank,2024,IS,Impairment losses on loans,-181.0,pfh_2024.pdf,423,Impairment (losses) / releases on loans and advances to / 4 (181) (404) - (1)
+Piraeus Bank,2023,IS,Impairment losses on loans,-404.0,pfh_2024.pdf,423,Impairment (losses) / releases on loans and advances to / 4 (181) (404) - (1)
+Piraeus Bank,2024,IS,Profit before tax,1436.0,pfh_2024.pdf,423,"PROFIT BEFORE INCOME TAX 1,436 1,078 1,023 101"
+Piraeus Bank,2023,IS,Profit before tax,1078.0,pfh_2024.pdf,423,"PROFIT BEFORE INCOME TAX 1,436 1,078 1,023 101"
+Piraeus Bank,2024,IS,Net profit attributable to shareholders,1066.0,pfh_2024.pdf,423,"Profit attributable to the equity holders of the parent 1,066 788 - -"
+Piraeus Bank,2023,IS,Net profit attributable to shareholders,788.0,pfh_2024.pdf,423,"Profit attributable to the equity holders of the parent 1,066 788 - -"
+Piraeus Bank,2024,BS,Cash and balances with central banks,7423.0,pfh_2024.pdf,425,"Cash and balances with Central Banks 18 7,423 10,567 - -"
+Piraeus Bank,2023,BS,Cash and balances with central banks,10567.0,pfh_2024.pdf,425,"Cash and balances with Central Banks 18 7,423 10,567 - -"
+Piraeus Bank,2024,BS,Due from credit institutions,2352.0,pfh_2024.pdf,425,"Due from banks 19 2,352 1,034 56 34"
+Piraeus Bank,2023,BS,Due from credit institutions,1034.0,pfh_2024.pdf,425,"Due from banks 19 2,352 1,034 56 34"
+Piraeus Bank,2024,BS,Loans and advances to customers,40735.0,pfh_2024.pdf,425,"Loans and advances to customers at amortised cost 22 40,685 37,527 - - / Loans and advances to customers mandatorily measured at FVTPL 50 53 - -"
+Piraeus Bank,2023,BS,Loans and advances to customers,37580.0,pfh_2024.pdf,425,"Loans and advances to customers at amortised cost 22 40,685 37,527 - - / Loans and advances to customers mandatorily measured at FVTPL 50 53 - -"
+Piraeus Bank,2024,BS,Investment securities,15601.0,pfh_2024.pdf,425,"Investment securities 23 15,601 13,042 1,294 850"
+Piraeus Bank,2023,BS,Investment securities,13042.0,pfh_2024.pdf,425,"Investment securities 23 15,601 13,042 1,294 850"
+Piraeus Bank,2024,BS,Goodwill and intangible assets,417.0,pfh_2024.pdf,425,Intangible assets 25 417 347 - -
+Piraeus Bank,2023,BS,Goodwill and intangible assets,347.0,pfh_2024.pdf,425,Intangible assets 25 417 347 - -
+Piraeus Bank,2024,BS,Total assets,80044.0,pfh_2024.pdf,425,"TOTAL ASSETS 80,044 76,450 7,809 6,503"
+Piraeus Bank,2023,BS,Total assets,76450.0,pfh_2024.pdf,425,"TOTAL ASSETS 80,044 76,450 7,809 6,503"
+Piraeus Bank,2024,BS,Due to credit institutions,2378.0,pfh_2024.pdf,425,"Due to banks 30 2,378 4,618 - -"
+Piraeus Bank,2023,BS,Due to credit institutions,4618.0,pfh_2024.pdf,425,"Due to banks 30 2,378 4,618 - -"
+Piraeus Bank,2024,BS,Deposits from customers,62853.0,pfh_2024.pdf,425,"Due to customers 31 62,853 59,567 - -"
+Piraeus Bank,2023,BS,Deposits from customers,59567.0,pfh_2024.pdf,425,"Due to customers 31 62,853 59,567 - -"
+Piraeus Bank,2024,BS,Total liabilities,71771.0,pfh_2024.pdf,425,"TOTAL LIABILITIES 71,771 69,097 1,408 999"
+Piraeus Bank,2023,BS,Total liabilities,69097.0,pfh_2024.pdf,425,"TOTAL LIABILITIES 71,771 69,097 1,408 999"
+Piraeus Bank,2024,BS,Additional Tier 1 instruments,600.0,pfh_2024.pdf,425,Οther equity instruments 600 600 600 600
+Piraeus Bank,2023,BS,Additional Tier 1 instruments,600.0,pfh_2024.pdf,425,Οther equity instruments 600 600 600 600
+Piraeus Bank,2024,BS,Equity attributable to shareholders,8217.0,pfh_2024.pdf,425,"Capital and reserves attributable to the equity holders of the / parent 8,217 7,298 6,400 5,503"
+Piraeus Bank,2023,BS,Equity attributable to shareholders,7298.0,pfh_2024.pdf,425,"Capital and reserves attributable to the equity holders of the / parent 8,217 7,298 6,400 5,503"
+Piraeus Bank,2024,BS,Non-controlling interests,56.0,pfh_2024.pdf,425,Non controlling interest 56 56 - -
+Piraeus Bank,2023,BS,Non-controlling interests,56.0,pfh_2024.pdf,425,Non controlling interest 56 56 - -
+Piraeus Bank,2024,BS,Total equity,8273.0,pfh_2024.pdf,425,"TOTAL EQUITY 8,273 7,353 6,400 5,503"
+Piraeus Bank,2023,BS,Total equity,7353.0,pfh_2024.pdf,425,"TOTAL EQUITY 8,273 7,353 6,400 5,503"

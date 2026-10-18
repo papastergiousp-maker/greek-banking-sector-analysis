@@ -1,0 +1,13 @@
+bank,year,value,unit,source_file,source_page,line_in_report
+Alpha Bank,2022,12807.0,€ million,alpha_holdings_2023.pdf,244,"Due to Banks note: Term deposits, Central Banks (12,806,994 thousand)"
+Alpha Bank,2023,5134.0,€ million,alpha_holdings_2024.pdf,308,"Due to Banks note: Central Banks"
+Alpha Bank,2024,2602.0,€ million,alpha_holdings_2024.pdf,308,"Due to Banks note: Central Banks"
+Eurobank,2022,8774.0,€ million,eurobank_holdings_2023.pdf,146,"Balance sheet: Due to central banks"
+Eurobank,2023,3771.0,€ million,eurobank_holdings_2024.pdf,255,"Balance sheet: Due to central banks"
+Eurobank,2024,0.0,€ million,eurobank_holdings_2024.pdf,255,"Balance sheet: Due to central banks"
+NBG,2022,8100.0,€ million,nbg_2023.pdf,345,"Due to banks note: Amounts due to ECB and Central Banks"
+NBG,2023,1850.0,€ million,nbg_2024.pdf,502,"Due to banks note: Amounts due to ECB and Central Banks"
+NBG,2024,0.0,€ million,nbg_2024.pdf,502,"Due to banks note: Amounts due to ECB and Central Banks"
+Piraeus Bank,2022,5443.0,€ million,pfh_2023.pdf,351,"Due to banks note: Amounts due to ECB and central banks"
+Piraeus Bank,2023,3590.0,€ million,pfh_2024.pdf,617,"Due to banks note: Amounts due to ECB and central banks"
+Piraeus Bank,2024,0.0,€ million,pfh_2024.pdf,617,"Due to banks note: Amounts due to ECB and central banks"

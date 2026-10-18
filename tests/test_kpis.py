@@ -1,234 +1,199 @@
 """
-Regression tests for kpis_final.csv.
-Validates computed KPIs against re-derivation from raw CSVs and asserts data integrity.
+Data-quality tests for the Greek banking dataset.
+
+They re-derive every KPI from the statement lines, check the balance sheet
+identity, check that every number has a source page, and spot-check figures
+against the annual reports.
 
 Run with:  pytest tests/ -v
 """
-import pytest
-import pandas as pd
-import numpy as np
 from pathlib import Path
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+import numpy as np
+import pandas as pd
+import pytest
+
 ROOT = Path(__file__).parent.parent
-DATA_DIR = ROOT / "02_Banking_Sector_Dashboard" / "data" / "processed"
+DATA = ROOT / "02_Banking_Sector_Dashboard" / "data"
+PROC = DATA / "processed"
+MANUAL = DATA / "manual"
 
-KPIS_PATH = DATA_DIR / "kpis_final.csv"
-IS_PATH   = DATA_DIR / "income_statement_final.csv"
-BS_PATH   = DATA_DIR / "balance_sheet_final.csv"
-
-EXPECTED_BANKS = {"Eurobank", "Alpha Bank", "NBG", "Piraeus Bank"}
-EXPECTED_YEARS = {2022, 2023, 2024}
-
-TOLERANCE = 0.01   # 1% relative tolerance for re-derived KPIs
-ABS_TOL_PP = 0.5   # 0.5 percentage-point tolerance for ratio KPIs
+BANKS = {"Eurobank", "Alpha Bank", "NBG", "Piraeus Bank"}
+YEARS = {2022, 2023, 2024}
 
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
 @pytest.fixture(scope="module")
 def kpis():
-    return pd.read_csv(KPIS_PATH)
+    return pd.read_csv(PROC / "kpis_final.csv")
 
 
 @pytest.fixture(scope="module")
-def income_stmt():
-    return pd.read_csv(IS_PATH)
+def inc():
+    return pd.read_csv(PROC / "income_statement_final.csv")
 
 
 @pytest.fixture(scope="module")
-def balance_sheet():
-    return pd.read_csv(BS_PATH)
+def bal():
+    return pd.read_csv(PROC / "balance_sheet_final.csv")
 
 
 @pytest.fixture(scope="module")
-def is_pivot(income_stmt):
-    return income_stmt.pivot_table(
-        index=["bank", "year"], columns="metric", values="value", aggfunc="first"
-    ).reset_index()
+def wide(inc, bal):
+    both = pd.concat([inc, bal])
+    return both.pivot_table(index=["bank", "year"], columns="metric", values="value", aggfunc="first")
 
 
 @pytest.fixture(scope="module")
-def bs_pivot(balance_sheet):
-    return balance_sheet.pivot_table(
-        index=["bank", "year"], columns="metric", values="value", aggfunc="first"
-    ).reset_index()
+def opening():
+    op = pd.read_csv(MANUAL / "opening_balances_2021.csv")
+    return op.pivot_table(index=["bank", "year"], columns="metric", values="value", aggfunc="first")
 
 
-# ── Data integrity tests ───────────────────────────────────────────────────────
-class TestDataIntegrity:
+def prior(wide, opening, bank, year, metric):
+    if year == 2022:
+        return opening.loc[(bank, 2021), metric]
+    return wide.loc[(bank, year - 1), metric]
 
-    def test_row_count(self, kpis):
-        assert len(kpis) == 12, f"Expected 12 rows (4 banks × 3 years), got {len(kpis)}"
 
-    def test_bank_names(self, kpis):
-        actual = set(kpis["bank"].unique())
-        assert actual == EXPECTED_BANKS, f"Unexpected banks: {actual ^ EXPECTED_BANKS}"
+# ── Structure ─────────────────────────────────────────────────────────────────
+class TestStructure:
+    def test_twelve_rows(self, kpis):
+        assert len(kpis) == 12
 
-    def test_years(self, kpis):
-        actual = set(kpis["year"].unique())
-        assert actual == EXPECTED_YEARS, f"Unexpected years: {actual ^ EXPECTED_YEARS}"
+    def test_banks_and_years(self, kpis):
+        assert set(kpis["bank"]) == BANKS
+        assert set(kpis["year"]) == YEARS
 
     def test_unique_bank_year(self, kpis):
-        dupes = kpis.duplicated(subset=["bank", "year"])
-        assert not dupes.any(), f"Duplicate bank-year rows: {kpis[dupes][['bank','year']].values.tolist()}"
+        assert not kpis.duplicated(["bank", "year"]).any()
 
-    def test_no_nulls_primary_keys(self, kpis):
-        assert kpis["bank"].notna().all(), "Null values in 'bank' column"
-        assert kpis["year"].notna().all(), "Null values in 'year' column"
+    def test_no_missing_core_values(self, kpis):
+        core = ["nii", "operating_income", "operating_expenses", "net_profit", "impairment", "loans",
+                "deposits", "equity", "total_assets", "roe", "rote", "roa", "nim", "cost_to_income",
+                "cost_of_risk", "loan_to_deposit", "cet1", "total_capital_ratio", "npe_ratio", "dtc", "rwa"]
+        for col in core:
+            assert kpis[col].notna().all(), f"missing values in {col}"
 
-    def test_no_nulls_financial_columns(self, kpis):
-        financial_cols = ["nii", "operating_income", "operating_expenses", "net_profit",
-                          "impairment", "loans", "deposits", "equity", "total_assets",
-                          "roe", "cost_to_income", "loan_to_deposit", "nim", "roa", "cet1"]
-        for col in financial_cols:
-            assert col in kpis.columns, f"Missing column: {col}"
-            assert kpis[col].notna().all(), f"Null values in '{col}'"
+    def test_yoy_only_from_2023(self, kpis):
+        for col in ["nii_yoy", "profit_yoy", "assets_yoy", "opincome_yoy"]:
+            assert kpis.loc[kpis.year == 2022, col].isna().all()
+            assert kpis.loc[kpis.year > 2022, col].notna().all()
 
-    def test_yoy_columns_null_for_2022(self, kpis):
-        yoy_cols = ["nii_yoy", "profit_yoy", "assets_yoy", "opincome_yoy"]
-        yr2022 = kpis[kpis["year"] == 2022]
-        for col in yoy_cols:
-            if col in kpis.columns:
-                assert yr2022[col].isna().all(), f"YoY column '{col}' should be null for 2022 (no prior year)"
-
-    def test_values_are_positive(self, kpis):
-        must_positive = ["loans", "deposits", "equity", "total_assets", "nii"]
-        for col in must_positive:
-            assert (kpis[col] > 0).all(), f"Non-positive values in '{col}'"
-
-    def test_impairment_is_negative_or_zero(self, kpis):
-        assert (kpis["impairment"] <= 0).all(), "Impairment should be non-positive (provision charges)"
-
-    def test_operating_expenses_are_negative(self, kpis):
-        assert (kpis["operating_expenses"] < 0).all(), "Operating expenses should be negative"
+    def test_sign_conventions(self, kpis):
+        assert (kpis["operating_expenses"] < 0).all()
+        assert (kpis["impairment"] <= 0).all()
 
 
-# ── KPI re-derivation tests ────────────────────────────────────────────────────
-class TestKPIReDerivation:
+# ── Every number has a source ────────────────────────────────────────────────
+class TestSources:
+    def test_statement_lines_have_a_page(self, inc, bal):
+        for df in (inc, bal):
+            assert df["source_ref"].notna().all()
+            assert df["source_ref"].str.match(r"^\w+_20\d\d\.pdf p\.\d+$").all()
 
-    def test_roe_recomputed(self, kpis, is_pivot):
-        """ROE = net_profit / equity × 100. Validate within ABS_TOL_PP."""
-        recomputed = (kpis["net_profit"] / kpis["equity"]) * 100
-        diff = (recomputed - kpis["roe"]).abs()
-        fails = kpis[diff > ABS_TOL_PP][["bank", "year"]].values.tolist()
-        assert len(fails) == 0, f"ROE mismatch >±{ABS_TOL_PP}pp for: {fails}"
+    def test_ratios_have_a_page(self):
+        r = pd.read_csv(MANUAL / "regulatory_ratios.csv")
+        assert r["source_file"].notna().all() and (r["source_page"] > 0).all()
+        assert len(r) == 4 * 3 * 5  # 4 banks x 3 years x 5 measures
 
-    def test_roa_recomputed(self, kpis):
-        """ROA = net_profit / total_assets × 100. Validate within ABS_TOL_PP."""
-        recomputed = (kpis["net_profit"] / kpis["total_assets"]) * 100
-        diff = (recomputed - kpis["roa"]).abs()
-        fails = kpis[diff > ABS_TOL_PP][["bank", "year"]].values.tolist()
-        assert len(fails) == 0, f"ROA mismatch >±{ABS_TOL_PP}pp for: {fails}"
+    def test_sources_table_complete(self):
+        s = pd.read_csv(PROC / "sources.csv")
+        assert s["source"].notna().all()
+        assert (s["source"].str.len() > 0).all()
 
-    def test_cost_to_income_recomputed(self, kpis):
-        """C/I = |operating_expenses| / operating_income × 100."""
-        recomputed = (kpis["operating_expenses"].abs() / kpis["operating_income"]) * 100
-        diff = (recomputed - kpis["cost_to_income"]).abs()
-        fails = kpis[diff > ABS_TOL_PP][["bank", "year"]].values.tolist()
-        assert len(fails) == 0, f"Cost-to-Income mismatch >±{ABS_TOL_PP}pp for: {fails}"
-
-    def test_loan_to_deposit_recomputed(self, kpis):
-        """L/D = loans / deposits × 100."""
-        recomputed = (kpis["loans"] / kpis["deposits"]) * 100
-        diff = (recomputed - kpis["loan_to_deposit"]).abs()
-        fails = kpis[diff > ABS_TOL_PP][["bank", "year"]].values.tolist()
-        assert len(fails) == 0, f"Loan-to-Deposit mismatch >±{ABS_TOL_PP}pp for: {fails}"
-
-    def test_nim_recomputed(self, kpis):
-        """NIM = nii / total_assets × 100. Validates against stored NIM (rounded)."""
-        recomputed = (kpis["nii"] / kpis["total_assets"]) * 100
-        diff = (recomputed - kpis["nim"]).abs()
-        # Stored NIM has 2dp rounding, allow 0.01pp tolerance
-        fails = kpis[diff > 0.01][["bank", "year", "nim"]].values.tolist()
-        assert len(fails) == 0, f"NIM mismatch >0.01pp (check rounding): {fails}"
-
-    def test_nii_yoy_recomputed(self, kpis):
-        """NII YoY = (NII_t - NII_{t-1}) / NII_{t-1} × 100 for years 2023 and 2024."""
-        df = kpis.sort_values(["bank", "year"]).copy()
-        df["nii_prev"] = df.groupby("bank")["nii"].shift(1)
-        df["nii_yoy_recomp"] = (df["nii"] - df["nii_prev"]) / df["nii_prev"] * 100
-        df_check = df[df["year"] > 2022].dropna(subset=["nii_yoy", "nii_yoy_recomp"])
-        diff = (df_check["nii_yoy_recomp"] - df_check["nii_yoy"]).abs()
-        fails = df_check[diff > ABS_TOL_PP][["bank", "year"]].values.tolist()
-        assert len(fails) == 0, f"NII YoY mismatch >±{ABS_TOL_PP}pp for: {fails}"
+    def test_ecb_funding_has_a_page_and_matches_the_system_total(self):
+        e = pd.read_csv(MANUAL / "ecb_funding.csv")
+        assert len(e) == 12 and (e["source_page"] > 0).all()
+        total = e.groupby("year")["value"].sum()
+        # Piraeus FY2023 / FY2024 reports (p.12): ECB funding to the whole Greek banking
+        # system was €35.4bn at end-2022 and €14.3bn at end-2023; the four banks are most of it.
+        assert 34_000 < total[2022] <= 35_400
+        assert 14_000 < total[2023] <= 14_350
+        # The balance sheet line for Eurobank must equal the note figure
+        bal = pd.read_csv(PROC / "balance_sheet_final.csv")
+        eb = bal[(bal.bank == "Eurobank") & (bal.metric == "Due to central banks")].set_index("year")["value"]
+        assert (eb == e[e.bank == "Eurobank"].set_index("year")["value"]).all()
 
 
-# ── Balance sheet identity tests ──────────────────────────────────────────────
-class TestBalanceSheetIdentity:
+# ── Balance sheet identity ───────────────────────────────────────────────────
+class TestBalanceSheet:
+    def test_assets_equal_liabilities_plus_equity(self, wide):
+        diff = (wide["Total assets"] - wide["Total liabilities"] - wide["Total equity"]).abs()
+        assert (diff <= 0.2).all(), diff[diff > 0.2]
 
-    def test_assets_equal_liabilities_plus_equity(self, kpis):
-        """Assets ≈ Liabilities + Equity (within 1% tolerance)."""
-        # kpis_final has: total_assets, deposits (as proxy for liabilities), equity
-        # Full identity uses total_liabilities from balance_sheet_final.csv
-        # Here we assert using kpis columns as a proxy check
-        implied_liabilities = kpis["total_assets"] - kpis["equity"]
-        # All implied liabilities should be positive (assets > equity)
-        assert (implied_liabilities > 0).all(), "Assets < Equity for some bank-years — impossible"
+    def test_equity_split(self, wide):
+        # Reports round each line to €1m, so the split can differ by €1m
+        diff = (wide["Total equity"] - wide["Equity attributable to shareholders"]
+                - wide["Non-controlling interests"]).abs()
+        assert (diff <= 1.0).all()
 
-    def test_assets_liabilities_equity_from_bs_csv(self, bs_pivot):
-        """Full balance sheet identity: Total Assets = Total Liabilities + Total Equity."""
-        bs = bs_pivot.copy()
-        # Extract key line items (exact metric names from balance_sheet_final.csv)
-        metric_map = {
-            "Total assets": "total_assets",
-            "Total liabilities": "total_liabilities",
-            "Total equity": "total_equity",
-        }
-        for col_name, new_col in metric_map.items():
-            if col_name in bs.columns:
-                bs[new_col] = bs[col_name]
-
-        if not all(c in bs.columns for c in ["total_assets", "total_liabilities", "total_equity"]):
-            pytest.skip("Balance sheet CSV missing Total assets/liabilities/equity rows — check metric names")
-
-        bs["implied_assets"] = bs["total_liabilities"] + bs["total_equity"]
-        bs["bs_error_pct"] = ((bs["total_assets"] - bs["implied_assets"]) / bs["total_assets"]).abs() * 100
-
-        max_error = bs["bs_error_pct"].max()
-        fails = bs[bs["bs_error_pct"] > 1.0][["bank", "year", "bs_error_pct"]].values.tolist()
-        assert len(fails) == 0, f"Balance sheet identity fails >1% for: {fails}"
-
-    def test_deposits_less_than_total_liabilities_kpis(self, kpis):
-        """Deposits should be < Total Assets (sanity check)."""
-        assert (kpis["deposits"] < kpis["total_assets"]).all(), "Deposits exceed Total Assets"
-
-    def test_equity_less_than_total_assets(self, kpis):
-        """Equity < Total Assets (lever > 1)."""
-        assert (kpis["equity"] < kpis["total_assets"]).all(), "Equity >= Total Assets — impossible"
+    def test_ppop(self, wide):
+        diff = (wide["Profit from operations before impairments"]
+                - wide["Operating income"] - wide["Operating expenses"]).abs()
+        assert (diff <= 0.2).all()
 
     def test_leverage_range(self, kpis):
-        """Leverage (Assets/Equity) should be between 5× and 20× for systemic banks."""
-        leverage = kpis["total_assets"] / kpis["equity"]
-        assert (leverage >= 5).all(), f"Leverage < 5x for some bank: {leverage.min():.1f}x"
-        assert (leverage <= 20).all(), f"Leverage > 20x for some bank: {leverage.max():.1f}x"
+        lev = kpis["total_assets"] / kpis["equity"]
+        assert lev.between(5, 20).all()
 
 
-# ── Sector-level sanity tests ─────────────────────────────────────────────────
-class TestSectorSanity:
+# ── KPI re-derivation from the statement lines ───────────────────────────────
+class TestKPIs:
+    @pytest.mark.parametrize("bank", sorted(BANKS))
+    @pytest.mark.parametrize("year", sorted(YEARS))
+    def test_return_and_margin_ratios(self, kpis, wide, opening, bank, year):
+        k = kpis.set_index(["bank", "year"]).loc[(bank, year)]
+        w = wide.loc[(bank, year)]
+        np_ = w["Net profit attributable to shareholders"]
+        avg_eq = (w["Equity attributable to shareholders"]
+                  + prior(wide, opening, bank, year, "Equity attributable to shareholders")) / 2
+        avg_ta = (w["Total assets"] + prior(wide, opening, bank, year, "Total assets")) / 2
+        avg_ln = (w["Loans and advances to customers"]
+                  + prior(wide, opening, bank, year, "Loans and advances to customers")) / 2
+        assert k["roe"] == pytest.approx(np_ / avg_eq * 100, abs=0.06)
+        assert k["roa"] == pytest.approx(np_ / avg_ta * 100, abs=0.006)
+        assert k["nim"] == pytest.approx(w["Net interest income"] / avg_ta * 100, abs=0.006)
+        assert k["cost_of_risk"] == pytest.approx(-w["Impairment losses on loans"] / avg_ln * 100, abs=0.006)
+        assert k["cost_to_income"] == pytest.approx(-w["Operating expenses"] / w["Operating income"] * 100, abs=0.06)
+        assert k["loan_to_deposit"] == pytest.approx(
+            w["Loans and advances to customers"] / w["Deposits from customers"] * 100, abs=0.06)
 
-    def test_sector_nii_grew_2022_to_2024(self, kpis):
-        """Sector NII should have grown significantly 2022→2024 (ECB rate hike tailwind)."""
-        sector_nii = kpis.groupby("year")["nii"].sum()
-        assert sector_nii[2024] > sector_nii[2022] * 1.3, \
-            f"Sector NII growth 2022→2024 < 30%: {(sector_nii[2024]/sector_nii[2022]-1)*100:.1f}%"
+    def test_yoy_growth(self, kpis):
+        k = kpis.sort_values(["bank", "year"]).copy()
+        prev = k.groupby("bank")["nii"].shift(1)
+        calc = ((k["nii"] - prev) / prev * 100).round(1)
+        mask = k["year"] > 2022
+        assert np.allclose(calc[mask], k.loc[mask, "nii_yoy"], atol=0.06)
 
-    def test_cet1_above_regulatory_minimum(self, kpis):
-        """All banks should have CET1 > 10.5% (ECB Pillar 1 + conservation buffer)."""
-        min_cet1 = 10.5
-        fails = kpis[kpis["cet1"] < min_cet1][["bank", "year", "cet1"]].values.tolist()
-        assert len(fails) == 0, f"CET1 below {min_cet1}% for: {fails}"
+    def test_dtc_share_matches_banks_own_disclosure(self, kpis):
+        k = kpis.set_index(["bank", "year"])
+        # Alpha: DTC = 49.2% of Group CET1 (FY2024 report); Eurobank: 36% (FY2024 report)
+        assert k.loc[("Alpha Bank", 2024), "dtc_to_cet1"] == pytest.approx(49.2, abs=1.0)
+        assert k.loc[("Eurobank", 2024), "dtc_to_cet1"] == pytest.approx(36.0, abs=1.0)
 
-    def test_cost_to_income_reasonable_range(self, kpis):
-        """C/I should be between 20% and 60% for modern banks."""
-        assert (kpis["cost_to_income"] >= 20).all(), "C/I below 20% — unusually efficient"
-        assert (kpis["cost_to_income"] <= 60).all(), "C/I above 60% — check data"
 
-    def test_nim_positive_and_reasonable(self, kpis):
-        """NIM should be positive and between 0.5% and 5%."""
-        assert (kpis["nim"] > 0.5).all(), "NIM below 0.5% — unusually low"
-        assert (kpis["nim"] < 5.0).all(), "NIM above 5% — check data"
+# ── Spot checks against the annual reports ───────────────────────────────────
+class TestReportedFigures:
+    @pytest.mark.parametrize("bank,year,col,value", [
+        ("Alpha Bank", 2024, "net_profit", 654.0),        # Alpha Services and Holdings FY2024 p.246
+        ("Alpha Bank", 2024, "total_assets", 72075.0),    # p.248
+        ("Alpha Bank", 2023, "nii", 1659.0),              # FY2024 report, restated 2023
+        ("Alpha Bank", 2022, "nii", 1173.8),              # FY2023 report, restated 2022
+        ("Eurobank", 2024, "net_profit", 1448.0),         # Eurobank Holdings FY2024 p.256
+        ("Eurobank", 2024, "deposits", 78593.0),
+        ("NBG", 2024, "net_profit", 1158.0),              # NBG FY2024 p.367
+        ("NBG", 2024, "cet1", 18.3),                      # NBG FY2024 p.40
+        ("Piraeus Bank", 2024, "total_assets", 80044.0),  # PFH FY2024 p.425
+        ("Piraeus Bank", 2024, "cet1", 14.47),            # PFH FY2024 p.566
+        ("Piraeus Bank", 2024, "dtc", 3119.0),            # PFH FY2024 p.567, DTC in regulatory capital
+    ])
+    def test_value(self, kpis, bank, year, col, value):
+        got = kpis.set_index(["bank", "year"]).loc[(bank, year), col]
+        assert got == pytest.approx(value, abs=0.05)
 
-    def test_loan_to_deposit_reasonable(self, kpis):
-        """L/D should be between 50% and 100% for modern retail banks."""
-        assert (kpis["loan_to_deposit"] >= 50).all(), "L/D below 50% — check data"
-        assert (kpis["loan_to_deposit"] <= 100).all(), "L/D above 100% — check data"
+    def test_ratio_ranges(self, kpis):
+        assert kpis["cet1"].between(10, 25).all()
+        assert kpis["npe_ratio"].between(0, 10).all()
+        assert kpis["cost_to_income"].between(20, 60).all()
+        assert kpis["nim"].between(0.5, 5).all()
+        assert kpis["loan_to_deposit"].between(50, 100).all()

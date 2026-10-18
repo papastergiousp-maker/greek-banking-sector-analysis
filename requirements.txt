@@ -1,8 +1,8 @@
 # Greek Banking Sector Analysis - Dependencies
-# Python 3.9+
+# Python 3.11 (tested in CI)
 
 # Data Processing
-pandas>=2.0.0
+pandas>=2.1.0
 numpy>=1.24.0
 scipy>=1.10.0
 
@@ -23,9 +23,6 @@ ipykernel>=6.0.0
 pytest>=7.0.0
 pytest-cov>=4.0.0
 
-# Macro data (ECB rates from FRED)
-pandas-datareader>=0.10.0
-
 # Interactive app
 streamlit>=1.35.0
 
@@ -37,7 +34,6 @@ anthropic>=0.25.0
 
 # Utilities
 openpyxl>=3.1.0  # Excel support
-sqlalchemy>=2.0.0  # SQL toolkit
 
 # Dev tooling (optional — for contributors)
 pre-commit>=3.7.0

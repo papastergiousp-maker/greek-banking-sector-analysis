@@ -1,5 +1,5 @@
 """
-2_Peer_Comparison.py — Radar chart + ranked bar charts across the 4-bank peer group.
+2_Peer_Comparison.py — Radar chart, score table and ranked bar charts across the four banks.
 """
 
 import sys
@@ -8,9 +8,7 @@ sys.path.insert(0, str(Path(__file__).parents[1]))
 
 import streamlit as st
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import pandas as pd
-import numpy as np
 
 from utils.data import load_kpis, BANKS, YEARS, COLORS, LAYOUT
 
@@ -20,7 +18,8 @@ with st.sidebar:
     st.markdown("### 📊 Peer Comparison")
     year = st.radio("Select year", YEARS, index=2)
     st.divider()
-    st.caption("Normalised scores (min-max) and percentile ranks computed against the 4-bank peer group.")
+    st.caption("Scores are scaled between the weakest (0) and the strongest (1) of the four banks "
+               "on each measure (min-max), so they show position within this peer group only.")
 
 
 @st.cache_data
@@ -29,23 +28,28 @@ def get_kpis():
 
 
 kpis = get_kpis()
-ky   = kpis[kpis.year == year].set_index("bank")
+ky = kpis[kpis.year == year].set_index("bank")
 
-# ── Header ─────────────────────────────────────────────────────────────────────
+# ── Header ────────────────────────────────────────────────────────────────────
 st.title("Peer Comparison")
-st.caption(f"FY{year} — normalised percentile ranking (min-max) across Eurobank, Alpha Bank, Piraeus Bank, NBG")
+st.caption(f"FY{year}: Eurobank, Alpha Bank, Piraeus Bank and NBG on the same definitions")
 st.divider()
 
-# ── Normalise for radar ────────────────────────────────────────────────────────
-RADAR_METRICS = {
-    "RoTE": ("rote",            True),    # tangible equity return — industry standard
-    "ROE":  ("roe",             True),
-    "ROA":  ("roa",             True),
-    "NIM":  ("nim",             True),
-    "CET1": ("cet1",            True),
-    "C/I":  ("cost_to_income",  False),   # lower = better
-    "NPE":  ("npe_ratio",       False),   # lower = better
+# Measures where better and worse are clear. Size (assets, profit in €) and the
+# loan-to-deposit ratio are left out of the scores on purpose.
+SCORED = {
+    # label: (column, higher is better)
+    "RoTE": ("rote", True),
+    "ROE": ("roe", True),
+    "ROA": ("roa", True),
+    "NIM": ("nim", True),
+    "C/I": ("cost_to_income", False),
+    "Cost of risk": ("cost_of_risk", False),
+    "NPE": ("npe_ratio", False),
+    "CET1": ("cet1", True),
+    "DTC/CET1": ("dtc_to_cet1", False),
 }
+
 
 def normalise(series: pd.Series, higher_better: bool) -> pd.Series:
     mn, mx = series.min(), series.max()
@@ -55,24 +59,22 @@ def normalise(series: pd.Series, higher_better: bool) -> pd.Series:
     return norm if higher_better else 1 - norm
 
 
-radar_df = pd.DataFrame({
-    label: normalise(ky[col], hb)
-    for label, (col, hb) in RADAR_METRICS.items()
-    if col in ky.columns
-})
+scores = pd.DataFrame({label: normalise(ky[col], hb) for label, (col, hb) in SCORED.items()})
 
-# ── Radar chart ────────────────────────────────────────────────────────────────
-st.subheader(f"Spider Chart — FY{year} (normalised 0–1, 1 = best in peer group)")
+# ── Radar chart ───────────────────────────────────────────────────────────────
+st.subheader(f"Radar chart, FY{year} (1 = strongest of the four)")
 
-theta = list(radar_df.columns) + [radar_df.columns[0]]   # close the polygon
+theta = list(scores.columns) + [scores.columns[0]]   # close the polygon
+
 
 def _hex_rgba(hex_color: str, alpha: float) -> str:
     r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
     return f"rgba({r},{g},{b},{alpha})"
 
+
 fig_radar = go.Figure()
 for bank in BANKS:
-    r_vals = list(radar_df.loc[bank]) + [radar_df.loc[bank].iloc[0]]
+    r_vals = list(scores.loc[bank]) + [scores.loc[bank].iloc[0]]
     fig_radar.add_trace(go.Scatterpolar(
         r=r_vals, theta=theta, name=bank, fill="toself",
         line=dict(color=COLORS[bank], width=2.5),
@@ -81,122 +83,84 @@ for bank in BANKS:
     ))
 
 fig_radar.update_layout(
-    **{k: v for k, v in LAYOUT.items() if k not in ("xaxis", "yaxis")},
+    **{k: v for k, v in LAYOUT.items() if k not in ("xaxis", "yaxis", "legend", "margin", "title_font")},
     polar=dict(
         bgcolor="rgba(0,0,0,0)",
-        radialaxis=dict(visible=True, range=[0, 1],
-                        tickfont=dict(color="#64748b"),
-                        gridcolor="#1e293b"),
-        angularaxis=dict(tickfont=dict(color="#94a3b8"),
-                         gridcolor="#1e293b"),
+        radialaxis=dict(visible=True, range=[0, 1], tickfont=dict(color="#64748b"), gridcolor="#1e293b"),
+        angularaxis=dict(tickfont=dict(color="#94a3b8"), gridcolor="#1e293b"),
     ),
     height=480,
     legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="#94a3b8")),
     margin=dict(l=60, r=60, t=40, b=40),
-    title=f"FY{year} Multi-Metric Radar",
+    title=f"FY{year} scores on nine measures",
     title_font=dict(color="#f1f5f9"),
 )
 st.plotly_chart(fig_radar, use_container_width=True)
 
 st.divider()
 
-# ── Z-score / percentile rank table ───────────────────────────────────────────
-st.subheader("Percentile Ranks (FY" + str(year) + ")")
+# ── Score table ───────────────────────────────────────────────────────────────
+st.subheader(f"Scores and values, FY{year}")
 
-ALL_METRICS = {
-    "RoTE (%)":     ("rote",            True),
-    "ROE (%)":      ("roe",             True),
-    "ROA (%)":      ("roa",             True),
-    "NIM (%)":      ("nim",             True),
-    "CET1 (%)":     ("cet1",            True),
-    "C/I (%)":      ("cost_to_income",  False),
-    "L/D (%)":      ("loan_to_deposit", False),
-    "NPE (%)":      ("npe_ratio",       False),
-    "Net Profit":   ("net_profit",      True),
-    "NII (€m)":     ("nii",             True),
-    "Assets (€bn)": ("total_assets",    True),
-}
+FMT = {"RoTE": "{:.1f}%", "ROE": "{:.1f}%", "ROA": "{:.2f}%", "NIM": "{:.2f}%", "C/I": "{:.1f}%",
+       "Cost of risk": "{:.2f}%", "NPE": "{:.1f}%", "CET1": "{:.1f}%", "DTC/CET1": "{:.0f}%"}
 
-rank_rows = []
-for bank in BANKS:
-    row = {"Bank": bank}
-    for label, (col, hb) in ALL_METRICS.items():
-        if col not in ky.columns:
-            row[label] = "—"
-            continue
-        series = ky[col].dropna()
-        pct_rank = int(normalise(series, hb).loc[bank] * 100)
-        row[label] = f"{pct_rank}th"
-    rank_rows.append(row)
+score_tbl = (scores * 100).round(0).astype(int).loc[BANKS]
+value_tbl = pd.DataFrame({label: [FMT[label].format(ky.loc[b, col]) for b in BANKS]
+                          for label, (col, _) in SCORED.items()}, index=BANKS)
 
-rank_df = pd.DataFrame(rank_rows).set_index("Bank")
 
-def style_pct(val):
-    if val == "—":
-        return ""
-    n = int(val.replace("th", ""))
-    if n >= 75:
+def style_score(val):
+    if val >= 75:
         return "background-color: #14532d; color: #86efac"
-    if n >= 50:
+    if val >= 50:
         return "background-color: #1e3a1e; color: #4ade80"
-    if n >= 25:
+    if val >= 25:
         return "background-color: #422006; color: #fb923c"
     return "background-color: #450a0a; color: #fca5a5"
 
-st.dataframe(rank_df.style.applymap(style_pct),
-             use_container_width=True, height=220)
-st.caption("Percentile = rank within 4-bank peer group. 100th = best, 0th = worst (direction-adjusted).")
+
+st.markdown("**Score** (0 = weakest of the four, 100 = strongest)")
+st.dataframe(score_tbl.style.map(style_score), use_container_width=True, height=215)
+st.markdown("**Values**")
+st.dataframe(value_tbl, use_container_width=True, height=215)
+st.caption("Lower is better for C/I, cost of risk, NPE and DTC/CET1; the score already takes that into account.")
 
 st.divider()
 
-# ── Ranked bar charts ──────────────────────────────────────────────────────────
-st.subheader("Ranked Bar Charts — FY" + str(year))
+# ── Ranked bar charts ─────────────────────────────────────────────────────────
+st.subheader(f"Ranked bar charts, FY{year}")
 
 BAR_METRICS = [
-    ("rote",            "RoTE (%)",          True,  "%"),
-    ("roe",             "ROE (%)",           True,  "%"),
-    ("nim",             "NIM (%)",           True,  "%"),
-    ("cost_to_income",  "Cost-to-Income (%)",False, "%"),
-    ("cet1",            "CET1 (%)",          True,  "%"),
-    ("npe_ratio",       "NPE Ratio (%)",     False, "%"),
-    ("net_profit",      "Net Profit (€m)",   True,  ""),
+    # column, label, higher is better, text format
+    ("rote", "RoTE (%)", True, "{:.1f}%"),
+    ("roe", "ROE (%)", True, "{:.1f}%"),
+    ("nim", "NIM (%)", True, "{:.2f}%"),
+    ("cost_to_income", "Cost-to-income (%)", False, "{:.1f}%"),
+    ("cet1", "CET1 (%)", True, "{:.1f}%"),
+    ("npe_ratio", "NPE ratio (%)", False, "{:.1f}%"),
+    ("net_profit", "Net profit (€m)", True, "€{:,.0f}m"),
 ]
 
-# Filter to metrics present in data
-BAR_METRICS = [(c, l, hb, sfx) for c, l, hb, sfx in BAR_METRICS if c in ky.columns]
-
 cols_per_row = 3
-rows_needed  = (len(BAR_METRICS) + cols_per_row - 1) // cols_per_row
-
-for r in range(rows_needed):
+for start in range(0, len(BAR_METRICS), cols_per_row):
     cols = st.columns(cols_per_row)
-    for i in range(cols_per_row):
-        idx = r * cols_per_row + i
-        if idx >= len(BAR_METRICS):
-            break
-        col_key, label, higher_better, suffix = BAR_METRICS[idx]
-        sorted_df = ky[[col_key]].copy().dropna()
-        sorted_df = sorted_df.sort_values(col_key, ascending=not higher_better)
-
-        bar_colors = [COLORS[b] for b in sorted_df.index]
+    for i, (col_key, label, higher_better, fmt) in enumerate(BAR_METRICS[start:start + cols_per_row]):
+        sorted_df = ky[[col_key]].dropna().sort_values(col_key, ascending=not higher_better)
         fig_bar = go.Figure(go.Bar(
-            x=sorted_df.index,
-            y=sorted_df[col_key],
-            marker_color=bar_colors,
-            text=[f"{v:.1f}{suffix}" for v in sorted_df[col_key]],
-            textposition="outside",
-            hovertemplate="%{x}<br>" + label + ": %{y:.2f}" + suffix + "<extra></extra>",
+            x=sorted_df.index, y=sorted_df[col_key],
+            marker_color=[COLORS[b] for b in sorted_df.index],
+            text=[fmt.format(v) for v in sorted_df[col_key]], textposition="outside",
+            hovertemplate="%{x}<br>" + label + ": %{y:,.2f}<extra></extra>",
         ))
-        arrow = "▼ lower = better" if not higher_better else "▲ higher = better"
+        note = "lower is better" if not higher_better else "higher is better"
         fig_bar.update_layout(
-            **LAYOUT,
-            title=f"{label}  ({arrow})",
-            height=300,
-            showlegend=False,
+            **{k: v for k, v in LAYOUT.items() if k != "margin"},
+            title=f"{label}, {note}", height=300, showlegend=False,
             margin=dict(l=30, r=10, t=50, b=40),
         )
-        fig_bar.update_yaxes(
-            ticksuffix=suffix,
-            autorange="reversed" if not higher_better else True,
-        )
+        fig_bar.update_yaxes(rangemode="tozero", range=[0, sorted_df[col_key].max() * 1.2])
         cols[i].plotly_chart(fig_bar, use_container_width=True)
+
+st.divider()
+st.caption("Greek Banking Sector Analysis 2022–2024 | Analyst: Spyros Papastergiou | papastergiousp@gmail.com")
