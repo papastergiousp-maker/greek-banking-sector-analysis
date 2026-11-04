@@ -15,6 +15,9 @@ Tables
     eba_stress_test    official EBA 2023 stress test results (fully loaded CET1)
     ecb_funding        amounts due to the ECB and central banks at each year end
     ecb_rates          ECB deposit facility rate, yearly average and year end
+    published          the banks' own published figures used to cross-check the KPIs
+                       (Piraeus RoaTBV; Alpha normalised profit and RoTBV, NIM,
+                       underlying cost of risk and its components), each with its source
 """
 
 import shutil
@@ -43,6 +46,7 @@ def rebuild():
         "eba_stress_test": pd.read_csv(MANUAL_DIR / "eba_stress_test_2023.csv"),
         "ecb_funding": pd.read_csv(MANUAL_DIR / "ecb_funding.csv"),
         "ecb_rates": pd.read_csv(MANUAL_DIR / "ecb_deposit_rate.csv"),
+        "published": pd.read_csv(MANUAL_DIR / "published_returns.csv"),
     }
     if DB_PATH.exists():
         DB_PATH.unlink()

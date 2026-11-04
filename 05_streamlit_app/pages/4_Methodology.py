@@ -191,5 +191,23 @@ missing company or balance sheet: the listed holding's consolidated statements i
 Piraeus defines its RoaTBV the way RoTE is defined here, and the two match.
 """)
 
+st.subheader("Alpha's other headline ratios and the ones here")
+_a23 = _k.loc[("Alpha Bank", 2023)]
+_nim_mixed = _a["nii"] / ((_a23["total_assets"] + _a["total_assets"]) / 2) * 100
+_crm = _pub[("Alpha Bank", 2024, "Credit risk management expenses")]
+_npe_imp = _pub[("Alpha Bank", 2024, "NPE transaction impairments")]
+_cor_under = (-_a["impairment"] + _crm - _npe_imp) / _a["avg_loans"] * 100
+st.markdown(f"""
+| 2024 | Alpha reports | Here | Why they differ |
+|------|--------------:|-----:|-----------------|
+| Net interest margin | {_pub[("Alpha Bank", 2024, "NIM")]:.1f}% | {_a['nim']:.2f}% | Alpha divides NII, which leaves out the Romanian bank and Alpha Life, by total assets that still include them as held for sale. Here both cover the same businesses. On Alpha's basis the year-end balances give {_nim_mixed:.2f}%. |
+| Cost of risk | {_pub[("Alpha Bank", 2024, "Underlying cost of risk")]:.2f}% (underlying) | {_a['cost_of_risk']:.2f}% | Here: the loan impairment line as printed (€{-_a['impairment']:,.0f}m). Alpha adds €{_crm:,.0f}m of credit risk management expenses and leaves out €{_npe_imp:,.0f}m of impairments from NPE sales: (€{-_a['impairment']:,.0f}m + €{_crm:,.0f}m − €{_npe_imp:,.0f}m) / average loans €{_a['avg_loans']:,.0f}m = {_cor_under:.2f}%. |
+| Loans to deposits | {_pub[("Alpha Bank", 2024, "Loans to deposits")]:.0f}% | {_a['loan_to_deposit']:.1f}% | Same definition. |
+
+Sources: Alpha's FY2024 results press release (NIM, underlying cost of risk); FY2024 report p.246 (credit risk
+management expenses), p.440 (NPE transaction impairments, loans to deposits). Both ways of
+measuring are correct; the one here keeps the four banks comparable.
+""")
+
 st.divider()
 st.caption("Greek Banking Sector Analysis 2022–2024 | Analyst: Spyros Papastergiou | papastergiousp@gmail.com")

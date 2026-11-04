@@ -614,6 +614,19 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 
+  <!-- ALPHA: ITS OWN FIGURES AND THE ONES HERE -->
+  <div class="val-section">
+    <div class="val-header">
+      <span class="val-badge">Alpha: its own figures and the ones here</span>
+      <span class="val-sub">FY2024 · why the headline ratios Alpha publishes differ from this dashboard</span>
+    </div>
+    <div class="table-wrap"><table class="val-table">
+      <thead><tr><th>2024</th><th>Alpha reports</th><th>Here</th><th>Why they differ</th></tr></thead>
+      <tbody id="alpha-tbody"></tbody>
+    </table></div>
+    <div class="val-note">Alpha's figures from its FY2024 results press release and the APM appendix of its FY2024 annual report (p.440 and p.441), table <code>published</code>. Both ways of measuring are correct; the one here keeps the four banks comparable.</div>
+  </div>
+
   <!-- HOW THE NUMBERS ARE CHECKED -->
   <div class="val-section">
     <div class="val-header">
@@ -976,6 +989,25 @@ function renderText() {
       <td>${sgn(e.cet1_fl_adverse_2025-e.cet1_fl_start_2022)}pp</td>
       <td style="color:var(--muted);font-size:0.6rem;">${e.source_file} p.${e.source_page}</td></tr>`;
   }).join(''));
+
+  // Alpha: its own figures and the ones here
+  const PUB = runQuery(`SELECT bank, year, metric, value FROM published`);
+  const pub = m => (PUB.find(r => r.bank==='Alpha Bank' && r.year===2024 && r.metric===m) || {}).value;
+  const A = K('Alpha Bank',2024), A23 = K('Alpha Bank',2023);
+  const normP = pub('Normalised profit after tax');
+  const roteNorm = (normP - A.at1_coupons) / A.avg_tangible_equity * 100;
+  const nimMixed = A.nii / ((A23.total_assets + A.total_assets) / 2) * 100;
+  const crm = pub('Credit risk management expenses'), npeImp = pub('NPE transaction impairments');
+  const corUnder = (-A.impairment + crm - npeImp) / A.avg_loans * 100;
+  set('alpha-tbody', [
+    ['Return on tangible equity', `${pub('Normalised RoTBV').toFixed(1)}% (normalised)`, `${A.rote.toFixed(1)}%`,
+     `Alpha leaves out ${fM(normP - A.net_profit)} of one-offs (NPE sales, a voluntary exit scheme) and removes capital above its target and accrued dividends from the equity base. Without the one-offs the RoTE here is ${roteNorm.toFixed(1)}%.`],
+    ['Net interest margin', `${pub('NIM').toFixed(1)}%`, `${A.nim.toFixed(2)}%`,
+     `Alpha divides NII, which leaves out the Romanian bank and Alpha Life, by total assets that still include them as held for sale. Here both cover the same businesses. On Alpha's basis the year-end balances give ${nimMixed.toFixed(2)}%.`],
+    ['Cost of risk', `${pub('Underlying cost of risk').toFixed(2)}% (underlying)`, `${A.cost_of_risk.toFixed(2)}%`,
+     `Here: the loan impairment line as printed (${fM(-A.impairment)}). Alpha adds ${fM(crm)} of credit risk management expenses and leaves out ${fM(npeImp)} of impairments from NPE sales: (${fM(-A.impairment)} + ${fM(crm)} − ${fM(npeImp)}) / average loans ${fM(A.avg_loans)} = ${corUnder.toFixed(2)}%.`],
+    ['Loans to deposits', `${pub('Loans to deposits').toFixed(0)}%`, `${A.loan_to_deposit.toFixed(1)}%`, `Same definition.`],
+  ].map(([m,a,h,w]) => `<tr><td style="color:#e8edf5;font-weight:600;white-space:nowrap;">${m}</td><td style="white-space:nowrap;">${a}</td><td style="white-space:nowrap;color:#e8edf5;">${h}</td><td>${w}</td></tr>`).join(''));
 
   // Checks
   const bs = runQuery(`SELECT bank, year, metric, value FROM balance_sheet WHERE metric IN ('Total assets','Total liabilities','Total equity')`);

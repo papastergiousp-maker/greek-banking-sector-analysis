@@ -34,13 +34,16 @@ Regulatory ratios (CET1, total capital ratio, NPE ratio, DTC, RWAs) are taken as
 | `processed/extracted_statements.csv` | 232 | Every statement line read from the PDFs, with file, page and the printed line (`source_label`) |
 | `processed/income_statement_final.csv` | 96 | 8 lines × 4 banks × 3 years, long format |
 | `processed/balance_sheet_final.csv` | 159 | 13 lines × 12 bank-years, plus Eurobank's "Due to central banks" (3 rows) |
-| `processed/kpis_final.csv` | 12 | One row per bank and year, 39 columns |
-| `processed/sources.csv` | 335 | Every number with its report file and PDF page |
+| `processed/kpis_final.csv` | 12 | One row per bank and year, 45 columns |
+| `processed/sources.csv` | 362 | Every number with its report file and PDF page |
 | `manual/regulatory_ratios.csv` | 60 | CET1 ratio, total capital ratio, NPE ratio, DTC and RWAs, with page |
 | `manual/opening_balances_2021.csv` | 20 | End-2021 total assets, equity, loans, intangibles and AT1 |
 | `manual/eba_stress_test_2023.csv` | 4 | Official EBA 2023 stress test results (fully loaded CET1) |
 | `manual/ecb_funding.csv` | 12 | Amounts due to the ECB and central banks at each year end, with page |
 | `manual/ecb_deposit_rate.csv` | 3 | ECB deposit facility rate, yearly average and year end |
+| `manual/perimeter_adjustments.csv` | 15 | Discontinued operations: balances or income put on the same perimeter for NIM and cost of risk, with page |
+| `manual/at1_coupons.csv` | 12 | AT1 coupons deducted in RoTE, with page |
+| `manual/published_returns.csv` | 10 | The banks' own published figures used to cross-check the KPIs (Piraeus RoaTBV; Alpha normalised profit and RoTBV, NIM, underlying cost of risk and its components, loans to deposits), with source |
 
 Long files (`income_statement_final.csv`, `balance_sheet_final.csv`) have the columns `bank`, `year`, `metric`, `value`, `unit`, `source_ref` (for example `alpha_holdings_2024.pdf p.248`).
 
@@ -119,6 +122,7 @@ Averages are (opening + closing) / 2. Ratios are in %.
 | `eba_stress_test` | bank, cet1_fl_start_2022, cet1_fl_adverse_2025, cet1_fl_baseline_2025, source_file, source_page, note |
 | `ecb_funding` | bank, year, value, unit, source_file, source_page, line_in_report |
 | `ecb_rates` | year, dfr_avg, dfr_year_end, source, note |
+| `published` | bank, year, metric, value, unit, source, note (from `manual/published_returns.csv`) |
 
 ---
 
@@ -140,6 +144,7 @@ Averages are (opening + closing) / 2. Ratios are in %.
 | October 2026 | Dataset rebuilt from the annual reports of the four listed groups with an automated extractor (`pipeline/`), every number traced to a PDF page. Earlier versions mixed bank-level and holding-level reports, mixed first-published and restated years, used year-end instead of average balances, and contained some estimated ratios. All of those values were replaced. |
 | October 2026 | Added amounts due to the ECB and central banks (`ecb_funding`) and the ECB deposit rate (`ecb_rates`) as sourced tables. |
 | November 2026 | NIM and cost of risk put on the same perimeter for discontinued operations (biggest change: Alpha NIM 2022–2024 from 1.55%, 2.21%, 2.28% to 1.75%, 2.42%, 2.39%). RoTE now deducts AT1 coupons (Alpha 2024 9.7% to 9.0%, Piraeus 2024 15.7% to 15.0%, which matches Piraeus' own RoaTBV). Statement lines unchanged. |
+| November 2026 | Added Alpha's own 2024 figures (normalised RoTBV, NIM, underlying cost of risk and its components, loans to deposits) to `published_returns.csv` and the new `published` table, with a comparison in the README, the dashboard and the Methodology page. The KPIs are unchanged. |
 
 ---
 

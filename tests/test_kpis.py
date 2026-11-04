@@ -258,6 +258,19 @@ class TestReportedFigures:
         assert k.loc[("Alpha Bank", 2024), "loan_to_deposit"] == pytest.approx(77, abs=0.5)
         # Eurobank 2022 cost of risk on continuing operations: 276 / 38,834 = 0.71% (FY2023 report p.72)
         assert k.loc[("Eurobank", 2022), "cost_of_risk"] == pytest.approx(0.71, abs=0.006)
+        # Alpha 2024, its own definitions (published_returns.csv):
+        pub = pd.read_csv(MANUAL / "published_returns.csv").set_index(["bank", "year", "metric"])["value"]
+        a = k.loc[("Alpha Bank", 2024)]
+        # underlying cost of risk 0.63% = (loan impairments + credit risk management expenses
+        # - NPE transaction impairments) / average net loans
+        underlying = (-a["impairment"] + pub[("Alpha Bank", 2024, "Credit risk management expenses")]
+                      - pub[("Alpha Bank", 2024, "NPE transaction impairments")]) / a["avg_loans"] * 100
+        assert underlying == pytest.approx(pub[("Alpha Bank", 2024, "Underlying cost of risk")], abs=0.006)
+        # NIM 2.2%: NII over average total assets that still include the businesses held for sale;
+        # on that basis the year-end balances give 2.28%, against 2.39% on the same perimeter
+        mixed = a["nii"] / ((k.loc[("Alpha Bank", 2023), "total_assets"] + a["total_assets"]) / 2) * 100
+        assert mixed == pytest.approx(pub[("Alpha Bank", 2024, "NIM")], abs=0.1)
+        assert a["nim"] > mixed
 
     def test_ratio_ranges(self, kpis):
         assert kpis["cet1"].between(10, 25).all()

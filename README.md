@@ -57,8 +57,8 @@ In 2025 each holding company merged with its bank, so the listed company is now 
 **Same businesses in income and balances.** Alpha sold Alpha Bank Romania to UniCredit in November 2024 and agreed to sell it 51% of Alpha Life; Eurobank sold Eurobank Direktna (Serbia) in 2023; NBG sold its insurer in 2022. The reports show these as discontinued operations: the income statement leaves them out, while the balance sheet still held them for a while, inside its lines or as held for sale. NIM and cost of risk put both on the same footing with each bank's own disclosures: Eurobank publishes its continuing-operations balances, Alpha's 2024 assets held for sale are taken out, and where the report gives no balances (Alpha 2022–2023, NBG 2022) the businesses' net interest income and loan impairments are added back from the discontinued-operations note. The statement lines stay as printed. Without this Alpha's NIM came out about 0.2pp too low (1.55%, 2.21%, 2.28% instead of 1.75%, 2.42%, 2.39%), and its loans and deposits seemed to fall in 2023 when, with the Romanian bank and Alpha Life, they rose 1.6% and 3.5%. Amounts and pages: `data/manual/perimeter_adjustments.csv`.
 
 **Checks.**
-- Every statement line and ratio has its report file and PDF page (`sources` table, 335 numbers).
-- 66 pytest tests re-derive ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines (and the perimeter and AT1 coupon files), check the balance sheet identity, compare key figures with the reports, compare ratios with the banks' own figures where the definition is the same (Piraeus RoTE, Alpha ROA and loans to deposits, Eurobank 2022 cost of risk, the DTC share of CET1), and compare ECB funding with the total for the Greek banking system.
+- Every statement line and ratio has its report file and PDF page (`sources` table, 362 numbers).
+- 66 pytest tests re-derive ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines (and the perimeter and AT1 coupon files), check the balance sheet identity, compare key figures with the reports, compare ratios with the banks' own figures where the definition is the same (Piraeus RoTE, Alpha ROA and loans to deposits, Eurobank 2022 cost of risk, the DTC share of CET1), rebuild Alpha's underlying cost of risk from its own components, and compare ECB funding with the total for the Greek banking system.
 - GitHub Actions runs the tests, eight notebooks and all eight Streamlit pages on every push.
 
 ---
@@ -195,6 +195,19 @@ The four listed groups on the same definitions. Open the [dashboard](https://phy
 | Alpha Bank | 1,645 | 654 | 72,075 | 8.5% | 9.0% | 16.3% | 3.8% |
 
 Eurobank 2024 includes Hellenic Bank (Cyprus) from 30 June 2024. Alpha's NII excludes Alpha Bank Romania and Alpha Life, sold to UniCredit; its total assets include Alpha Life, held for sale. RoTE is after AT1 coupons.
+
+### Alpha: its own figures and the ones here (2024)
+
+Alpha's headline ratios differ from the ones above because they are measured differently, not because a number is missing. Both are correct; the ones here keep the four banks comparable.
+
+| 2024 | Alpha reports | Here | Why they differ |
+|:-----|--------------:|-----:|:----------------|
+| Return on tangible equity | 14.0% (normalised) | 9.0% | Alpha leaves out €207m of one-offs (NPE sales, a voluntary exit scheme) and removes capital above its target and accrued dividends from the equity base. Without the one-offs the RoTE here is 12.1%. |
+| Net interest margin | 2.2% | 2.39% | Alpha divides NII, which leaves out the Romanian bank and Alpha Life, by total assets that still include them as held for sale. Here both cover the same businesses. On Alpha's basis the year-end balances give 2.28%. |
+| Cost of risk | 0.63% (underlying) | 0.96% | Here: the loan impairment line as printed (€360m). Alpha adds €93m of credit risk management expenses and leaves out €216m of impairments from NPE sales: (€360m + €93m − €216m) / average loans €37,606m = 0.63%. |
+| Loans to deposits | 77% | 76.5% | Same definition. |
+
+Alpha's figures: FY2024 results press release (RoTBV, NIM, underlying cost of risk) and the APM appendix of the FY2024 annual report (p.440 and p.441). They are in `data/manual/published_returns.csv` (table `published`), and the tests rebuild the 0.63% from its components.
 
 ---
 
