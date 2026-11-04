@@ -155,10 +155,11 @@ def stress_bank(row: pd.Series, delta_cor_bps: int, loan_growth_pct: float, nim_
     29% tax on the change in profit; no dividends; RWAs unchanged.
     CET1 at the end of the stress year = (CET1 capital + stressed net profit) / RWAs.
     """
+    # Margin and cost of risk on the same perimeter as the kpis table (nim_*, cor_* columns)
     loans_adv = row["loans"] * (1 + loan_growth_pct / 100)
-    assets_adv = row["avg_total_assets"] + row["loans"] * loan_growth_pct / 100
-    nim_adv = row["nii"] / row["avg_total_assets"] - nim_comp_bps / 10_000
-    cor_adv = -row["impairment"] / row["avg_loans"] + delta_cor_bps / 10_000
+    assets_adv = row["nim_avg_assets"] + row["loans"] * loan_growth_pct / 100
+    nim_adv = row["nim_nii"] / row["nim_avg_assets"] - nim_comp_bps / 10_000
+    cor_adv = -row["cor_impairment"] / row["cor_avg_loans"] + delta_cor_bps / 10_000
 
     nii_adv = nim_adv * assets_adv
     imp_adv = cor_adv * loans_adv
@@ -206,6 +207,7 @@ def forecast_nii(kpis_df: pd.DataFrame, scenario_name: str) -> pd.DataFrame:
       • Total assets grow 2% a year from the end-2024 balance sheet, so the 2025
         average is TA_2024 x (1 + g/2) and the 2026 average TA_2024 x (1 + g) x (1 + g/2).
         Starting from end-2024 captures Eurobank's mid-2024 consolidation of Hellenic Bank.
+        Assets are on the NIM perimeter (for Alpha, without Alpha Life, held for sale).
       • rate_effect = change in NIM x last year's average assets; vol_effect = the rest.
     """
     k24 = kpis_df[kpis_df.year == 2024].set_index("bank")
@@ -215,11 +217,11 @@ def forecast_nii(kpis_df: pd.DataFrame, scenario_name: str) -> pd.DataFrame:
     result = []
     for bank in BANKS:
         nim_prev = k24.loc[bank, "nim"]
-        assets_prev = k24.loc[bank, "avg_total_assets"]
+        assets_prev = k24.loc[bank, "nim_avg_assets"]
         nii_prev = k24.loc[bank, "nii"]
         for i, year in enumerate([2025, 2026]):
             nim = k24.loc[bank, "nim"] + sens[bank] * (rates[year] - ECB_HIST[2024])
-            assets = k24.loc[bank, "total_assets"] * (1 + ASSET_GROWTH) ** i * (1 + ASSET_GROWTH / 2)
+            assets = k24.loc[bank, "nim_assets_end"] * (1 + ASSET_GROWTH) ** i * (1 + ASSET_GROWTH / 2)
             nii = nim / 100 * assets
             rate_effect = (nim - nim_prev) / 100 * assets_prev
             result.append({   # unrounded, so totals match the notebook; round when displaying

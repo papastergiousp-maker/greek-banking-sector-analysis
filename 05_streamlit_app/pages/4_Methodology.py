@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parents[1]))
 import streamlit as st
 import pandas as pd
 
-from utils.data import load_sources
+from utils.data import load_kpis, load_sources, MANUAL
 
 st.set_page_config(page_title="Methodology", page_icon="📋", layout="wide")
 
@@ -51,6 +51,28 @@ sheet pages with `pdfplumber`; the ratios, which sit in the text of the reports,
 
 st.divider()
 
+# ── Same perimeter ─────────────────────────────────────────────────────────────
+st.subheader("Same perimeter for income and balances")
+st.markdown("""
+When a bank sells, or is selling, a business, it shows that business as a **discontinued operation**:
+the income statement leaves it out, while the balance sheet may still hold it, inside its lines or as
+assets held for sale. A margin that divides one by the other then mixes two different groups.
+
+| Bank | Business | What the reports show | How NIM and cost of risk treat it |
+|------|----------|-----------------------|-----------------------------------|
+| Alpha | Alpha Bank Romania (sold to UniCredit, 4.11.2024), Alpha Life (51% to UniCredit, 2025), Alpha Leasing Romania | Income left out in 2022–2024; balances inside the lines at end-2021 and end-2022, held for sale at end-2023 and end-2024 | 2022–2023: their net interest income and loan impairments added back (FY2023 report p.417, FY2024 report p.395), loans held for sale added back at end-2023 (FY2023 p.403). 2024: their assets held for sale taken out (FY2024 p.390) |
+| Eurobank | Eurobank Direktna, Serbia (sold 2.11.2023) | Income left out in 2022–2023; balances inside the lines at end-2021 and end-2022 | Eurobank's own continuing-operations balances (FY2023 report p.73) |
+| NBG | Ethniki Insurance (sold 31.3.2022), CAC Coral | Income left out in 2022; held for sale at end-2021 | Their net interest income added back (FY2022 report p.286) |
+| Piraeus | Small disposal group | Assets from discontinued operations at end-2021 | Taken out (FY2022 report p.119) |
+
+The printed statement lines are not changed: NII, profit and total assets are as published. Without this,
+Alpha's NIM came out about 0.2pp too low, and its loans and deposits seemed to fall in 2023 (−6.7% and
+−4.6%) when they rose (+1.6% and +3.5% with the Romanian bank and Alpha Life; the report itself gives +3%
+for deposits). The amounts and pages are in `data/manual/perimeter_adjustments.csv`.
+""")
+
+st.divider()
+
 # ── Metric definitions ─────────────────────────────────────────────────────────
 st.subheader("Metric Definitions")
 
@@ -59,12 +81,12 @@ defs = [
     ("Operating income", "Total operating income", "Each bank's own total income line (e.g. 'Total income from banking operations' for Alpha, 'Total net income' for Piraeus)."),
     ("Operating expenses", "Operating expenses", "Each bank's total operating expenses line, as printed (NBG: personnel, administrative and depreciation lines added up)."),
     ("Impairments", "Impairment losses on loans", "Each bank's credit impairment line for loans (Alpha's line also includes provisions for other credit risk)."),
-    ("NIM", "Net interest margin", "NII / average total assets (opening + closing / 2)."),
+    ("NIM", "Net interest margin", "NII / average total assets (opening + closing / 2), with income and assets covering the same businesses (see above)."),
     ("ROE", "Return on equity", "Net profit attributable to shareholders / average equity attributable to shareholders."),
-    ("RoTE", "Return on tangible equity", "Net profit attributable / average (equity attributable − AT1 − goodwill and intangibles). AT1 coupons not deducted."),
+    ("RoTE", "Return on tangible equity", "(Net profit attributable − AT1 coupons) / average (equity attributable − AT1 − goodwill and intangibles). Coupons: Alpha €24m (2023) and €48m (2024), Piraeus €53m a year."),
     ("ROA", "Return on assets", "Net profit attributable / average total assets."),
     ("C/I", "Cost-to-income ratio", "Operating expenses / operating income."),
-    ("CoR", "Cost of risk", "Loan impairments / average net loans."),
+    ("CoR", "Cost of risk", "Loan impairments / average net loans, same perimeter as NIM."),
     ("L/D", "Loan-to-deposit ratio", "Net loans to customers / customer deposits."),
     ("CET1", "CET1 ratio", "As reported in each annual report's capital adequacy section (regulatory, transitional)."),
     ("NPE ratio", "Non-performing exposure ratio", "As reported by each bank."),
@@ -86,6 +108,7 @@ st.markdown("""
         |
         v  pipeline/extract_statements.py   (pdfplumber, 16 statement pages)
         |  data/manual/regulatory_ratios.csv (ratios, with PDF page)
+        |  data/manual/perimeter_adjustments.csv, at1_coupons.csv (with PDF page)
         v
 pipeline/build_dataset.py  ->  kpis_final.csv, income_statement_final.csv,
                                balance_sheet_final.csv, sources.csv
@@ -133,11 +156,39 @@ st.divider()
 st.subheader("Data Quality")
 st.markdown("""
 **Automated tests** (`pytest tests/ -v`) check that:
-- ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit re-computed from the statement lines match `kpis_final.csv`
+- ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit re-computed from the statement lines (and the perimeter and AT1 coupon files) match `kpis_final.csv`
 - Total assets = total liabilities + total equity for every bank and year
 - Every statement line and ratio has a report and page reference
 - Key figures match the annual reports (e.g. Alpha 2024 net profit €654m, NBG 2024 CET1 18.3%)
 - The DTC share of CET1 matches the banks' own disclosures
+- Ratios match the banks' own figures where they use the same definition: Piraeus RoTE 12.3% (2023) and 15.0% (2024), Alpha ROA 0.91% and loans to deposits 75% and 77%, Eurobank 2022 cost of risk 0.71%
+""")
+
+st.divider()
+
+# ── Comparing with the banks' own returns ──────────────────────────────────────
+st.subheader("Why Alpha's published return is higher than the ROE here")
+_k = load_kpis().set_index(["bank", "year"])
+_a = _k.loc[("Alpha Bank", 2024)]
+_pub = pd.read_csv(MANUAL / "published_returns.csv").set_index(["bank", "year", "metric"])["value"]
+_norm = _pub[("Alpha Bank", 2024, "Normalised profit after tax")]
+_rotbv = _pub[("Alpha Bank", 2024, "Normalised RoTBV")]
+_rote_norm = (_norm - _a["at1_coupons"]) / _a["avg_tangible_equity"] * 100
+st.markdown(f"""
+Alpha's headline 2024 return, **{_rotbv:.1f}% normalised RoTBV**, uses three choices that the
+reported ROE here does not:
+
+| Step | Profit (€m) | Equity base | 2024 |
+|------|------------:|-------------|-----:|
+| ROE, as reported | {_a['net_profit']:,.0f} | Average equity attributable (incl. AT1) | {_a['roe']:.1f}% |
+| RoTE: less AT1 coupons, tangible equity without AT1 | {_a['net_profit'] - _a['at1_coupons']:,.0f} | Average tangible equity {_a['avg_tangible_equity']:,.0f} | {_a['rote']:.1f}% |
+| Excluding one-offs (NPE sales, voluntary exit scheme, transformation costs) | {_norm - _a['at1_coupons']:,.0f} | Same | {_rote_norm:.1f}% |
+| Alpha's own measure: also removes capital above its target and accrued dividends from the equity base | {_norm - _a['at1_coupons']:,.0f} | Adjusted TBV | {_rotbv:.1f}% |
+
+Sources: reported profit and AT1 coupons, FY2024 report p.246 and p.290; normalised profit €{_norm:,.0f}m,
+FY2024 report p.441 (APM appendix); {_rotbv:.1f}% from Alpha's FY2024 results press release. There is no
+missing company or balance sheet: the listed holding's consolidated statements include Alpha Bank S.A.
+Piraeus defines its RoaTBV the way RoTE is defined here, and the two match.
 """)
 
 st.divider()

@@ -72,9 +72,9 @@ VERIFIED = {
     "sector_nii": {2022: 5376, 2023: 8099, 2024: 8596},
     "sector_nii_growth_pct": 59.9,
     "sector_net_profit": {2022: 3785, 2023: 3652, 2024: 4326},
-    "walk_2023": {"delta": 2723, "rate": 2891},
-    "walk_2024": {"delta": 497, "rate": 270, "volume": 225},
-    "eurobank_volume_2024": 265,
+    "walk_2023": {"delta": 2723, "rate": 2862},
+    "walk_2024": {"delta": 497, "rate": 157, "volume": 337},
+    "eurobank_volume_2024": 302,
     "sector_underlying_2022": 2577,          # not recomputable from the CSV
     "reported_change_2023_pct": -3.5,
     "underlying_change_2023_pct": 42,        # "about 42%"
@@ -83,7 +83,7 @@ VERIFIED = {
         "NBG": (371, 18.3, 19.3, 420),
         "Eurobank": (402, 16.8, 17.6, 367),
         "Piraeus Bank": (217, 14.5, 15.1, 353),
-        "Alpha Bank": (-118, 16.3, 15.9, 209),
+        "Alpha Bank": (-110, 16.3, 15.9, 209),
     },
     # official EBA 2023 stress test, fully loaded CET1 (%): Dec 2022, adverse end-2025
     "eba_2023": {
@@ -92,9 +92,9 @@ VERIFIED = {
         "NBG": (15.9, 14.5),
         "Piraeus Bank": (11.5, 9.1),
     },
-    "nii_2026_base": {"Eurobank": 2430, "Alpha Bank": 1434, "Piraeus Bank": 1828, "NBG": 1902},
-    "sector_nii_2026_base": 7593,
-    "sector_nii_2026_vs_2024_pct": -11.7,
+    "nii_2026_base": {"Eurobank": 2447, "Alpha Bank": 1508, "Piraeus Bank": 1828, "NBG": 1905},
+    "sector_nii_2026_base": 7688,
+    "sector_nii_2026_vs_2024_pct": -10.6,
     "dtc_total_bn": {2022: 13.5, 2024: 12.0},
     "dtc_to_cet1_2024": {"Eurobank": 36, "Piraeus Bank": 63},
     "ecb_funding_bn": {2022: 35.1, 2023: 14.3, 2024: 2.6},   # all Alpha in 2024
@@ -116,24 +116,29 @@ sector = kpis.groupby("year")[["nii", "operating_income", "net_profit", "loans",
 
 
 def rate_volume_walk(df):
-    """Change in NII split into rate (margin), volume and mix, per bank and year."""
+    """Change in reported NII split into rate (margin), volume, mix and businesses sold, per bank and year.
+
+    NIM and average assets are on the same perimeter as kpis_final.csv (nim_nii / nim_avg_assets).
+    When a business leaves that basis (its NII was added back last year, not this year), its NII of
+    the previous year is taken out of the volume effect. "sold" is what is left: the change in NII of
+    the businesses being sold that the margins include (Alpha 2023 only, about EUR 12m).
+    """
     rows = []
     for bank in BANKS:
         b = df[df.bank == bank].set_index("year")
-        nim = b["nii"] / b["avg_total_assets"]          # unrounded NIM, so the walk adds up
+        nim = b["nim_nii"] / b["nim_avg_assets"]          # unrounded NIM, so the walk adds up
+        added = b["nim_nii"] - b["nii"]
         for yr in (2023, 2024):
             p = yr - 1
             d_nim = nim[yr] - nim[p]
-            d_a = b.loc[yr, "avg_total_assets"] - b.loc[p, "avg_total_assets"]
-            rows.append({
-                "bank": bank, "year": yr,
-                "delta": b.loc[yr, "nii"] - b.loc[p, "nii"],
-                "rate": d_nim * b.loc[p, "avg_total_assets"],
-                "volume": nim[p] * d_a,
-                "mix": d_nim * d_a,
-            })
+            d_a = b.loc[yr, "nim_avg_assets"] - b.loc[p, "nim_avg_assets"]
+            leaving = added[p] if (added[p] > 0 and added[yr] == 0) else 0.0
+            delta = b.loc[yr, "nii"] - b.loc[p, "nii"]
+            rate, volume, mix = d_nim * b.loc[p, "nim_avg_assets"], nim[p] * d_a + leaving, d_nim * d_a
+            rows.append({"bank": bank, "year": yr, "delta": delta, "rate": rate, "volume": volume,
+                         "mix": mix, "sold": delta - rate - volume - mix})
     w = pd.DataFrame(rows)
-    assert ((w.rate + w.volume + w.mix) - w.delta).abs().max() < 0.5
+    assert w["sold"].abs().max() < 15
     return w
 
 
@@ -142,11 +147,11 @@ def stress_test(df24):
     rows = {}
     for bank in BANKS:
         r = df24.loc[bank]
-        nim = r["nii"] / r["avg_total_assets"]
-        cor = -r["impairment"] / r["avg_loans"]
+        nim = r["nim_nii"] / r["nim_avg_assets"]          # same perimeter as kpis_final.csv
+        cor = -r["cor_impairment"] / r["cor_avg_loans"]
         cet1_capital = r["cet1"] / 100 * r["rwa"]
         loans_adv = r["loans"] * (1 + STRESS["loans"])
-        assets_adv = r["avg_total_assets"] + r["loans"] * STRESS["loans"]
+        assets_adv = r["nim_avg_assets"] + r["loans"] * STRESS["loans"]
         nii_adv = (nim + STRESS["nim_bp"] / 10_000) * assets_adv
         imp_adv = (cor + STRESS["cor_bp"] / 10_000) * loans_adv
         pbt_adv = r["pbt"] + (nii_adv - r["nii"]) - (imp_adv + r["impairment"])
@@ -195,14 +200,14 @@ def nii_2026_base_case():
         b = kpis[kpis.bank == bank].sort_values("year")
         slope = np.polyfit([ecb[y] for y in YEARS], b["nim"].tolist(), 1)[0]
         nim26 = b["nim"].iloc[-1] + slope * (2.00 - ecb[2024])
-        assets26 = b["total_assets"].iloc[-1] * 1.02 * 1.01
+        assets26 = b["nim_assets_end"].iloc[-1] * 1.02 * 1.01   # end-2024 assets on the NIM perimeter
         out[bank] = nim26 / 100 * assets26
     return pd.Series(out)
 
 
 walk = rate_volume_walk(kpis)
 stress = stress_test(k24)
-walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix"]].sum()
+walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix", "sold"]].sum()
 nii_growth = (sector.loc[2024, "nii"] / sector.loc[2022, "nii"] - 1) * 100
 np_2023_reported = (sector.loc[2023, "net_profit"] / sector.loc[2022, "net_profit"] - 1) * 100
 np_2023_underlying = (sector.loc[2023, "net_profit"] / VERIFIED["sector_underlying_2022"] - 1) * 100
@@ -785,7 +790,7 @@ assert min(eba_change, key=eba_change.get) == "Alpha Bank"
 assert max(stress["absorb_bp"].items(), key=lambda kv: kv[1])[0] == "NBG"
 vol24 = walk[walk.year == 2024].set_index("bank")["volume"]
 rate24 = walk[walk.year == 2024].set_index("bank")["rate"]
-assert vol24["Alpha Bank"] < 0
+assert rate24["Alpha Bank"] < 0
 assert stress["absorb_bp"].idxmin() == "Alpha Bank" and stress["absorb_bp"].idxmax() == "NBG"
 
 
@@ -819,8 +824,9 @@ BANK_POINTS = {
         ("Returns.", f"Lowest ROE ({pct1(k24.loc['Alpha Bank', 'roe'])}) and RoTE "
                      f"({pct1(k24.loc['Alpha Bank', 'rote'])}) of the four banks in 2024."),
         ("NII.", f"Fell {abs(k24.loc['Alpha Bank', 'nii_yoy']):.1f}% in 2024 after rising "
-                 f"{k23.loc['Alpha Bank', 'nii_yoy']:.1f}% in 2023. The volume effect took "
-                 f"{eur(abs(vol24['Alpha Bank']))} off NII."),
+                 f"{k23.loc['Alpha Bank', 'nii_yoy']:.1f}% in 2023, the only fall of the four. The margin effect "
+                 f"took {eur(abs(rate24['Alpha Bank']))} off NII. Figures exclude Alpha Bank Romania and Alpha Life, "
+                 f"sold to UniCredit."),
         ("Asset quality and costs.", f"NPE ratio fell from {pct1(k22.loc['Alpha Bank', 'npe_ratio'])} (2022) to "
                                      f"{pct1(k24.loc['Alpha Bank', 'npe_ratio'])} (2024), still the highest of the "
                                      f"four. Cost-to-income ({pct1(k24.loc['Alpha Bank', 'cost_to_income'])}) and "
@@ -918,9 +924,11 @@ sl = new_slide("NII: Rate vs Volume, and a Rough Guide to 2026",
 fig, (ax, ax2) = new_fig(1, 2, figsize=(12.6, 4.2), gridspec_kw={"width_ratios": [1.35, 1]})
 W23, W24 = walk_sector.loc[2023], walk_sector.loc[2024]
 steps = [("NII 2022", sector.loc[2022, "nii"], "total"),
-         ("Rate", W23["rate"], "rate"), ("Volume", W23["volume"], "volume"), ("Mix", W23["mix"], "mix"),
+         ("Rate", W23["rate"], "rate"), ("Volume", W23["volume"], "volume"),
+         ("Mix, other", W23["mix"] + W23["sold"], "mix"),
          ("NII 2023", sector.loc[2023, "nii"], "total"),
-         ("Rate", W24["rate"], "rate"), ("Volume", W24["volume"], "volume"), ("Mix", W24["mix"], "mix"),
+         ("Rate", W24["rate"], "rate"), ("Volume", W24["volume"], "volume"),
+         ("Mix, other", W24["mix"] + W24["sold"], "mix"),
          ("NII 2024", sector.loc[2024, "nii"], "total")]
 STEP_COLORS = {"total": "#cbd5e1", "rate": "#60a5fa", "volume": "#2dd4bf", "mix": "#a78bfa"}
 level = 0.0
@@ -972,7 +980,8 @@ add_paragraphs(sl, [
                       f"Volume and mix took a little back."),
     ("2023 to 2024.", f"NII rose by {eur(W24['delta'])}: rate {eur(W24['rate'])} and volume {eur(W24['volume'])}. "
                       f"Eurobank's volume effect was {eur(vol24['Eurobank'])}, after it consolidated Hellenic Bank "
-                      f"from 30 June 2024. Rounded effects can differ from the total by €1m."),
+                      f"from 30 June 2024. Alpha's Romanian bank and Alpha Life, sold to UniCredit, are kept out of "
+                      f"its volume effect. Rounded effects can differ from the total by €1m."),
     ("2026 base case.", f"Sector NII of {eur(VERIFIED['sector_nii_2026_base'])}, "
                         f"{abs(VERIFIED['sector_nii_2026_vs_2024_pct']):.1f}% below 2024. The percentage under each "
                         f"bank is its change from 2024. NIM moves with the ECB yearly average deposit rate (gradual "
@@ -1063,13 +1072,13 @@ for bank in BANKS:
     r = k24.loc[bank]
     reading = "Earns above the assumed cost of equity" if bank in above else \
         "Earns slightly below the assumed cost of equity"
-    rows.append([bank, eur(r["net_profit"]), eur(r["avg_tangible_equity"]), pct1(r["rote"]), f"{jp[bank]:.2f}x",
-                 reading])
+    rows.append([bank, eur(r["net_profit"] - r["at1_coupons"]), eur(r["avg_tangible_equity"]), pct1(r["rote"]),
+                 f"{jp[bank]:.2f}x", reading])
     colors.append([rgb(DISPLAY[bank]), None, None, None, TEXT, GOOD if bank in above else BAD])
 add_table(sl, 0.35, 1.3, [1.9, 1.8, 2.1, 1.4, 1.7, 3.7],
-          ["Bank", "Net profit 2024", "Avg tangible equity", "RoTE 2024", "Justified P/TBV", "Reading"],
+          ["Bank", "Profit less AT1 coupons", "Avg tangible equity", "RoTE 2024", "Justified P/TBV", "Reading"],
           rows, size=13, row_h=0.42, colors=colors, aligns=["l", "c", "c", "c", "c", "l"],
-          alt="Table per bank: net profit, average tangible equity, RoTE and justified price to tangible book "
+          alt="Table per bank: net profit less AT1 coupons, average tangible equity, RoTE and justified price to tangible book "
               "value for FY2024.", name="Valuation table")
 
 fig, ax = new_fig(figsize=(5.2, 3.3))
@@ -1098,8 +1107,8 @@ add_paragraphs(sl, [
     ("What it does not do.", "No market prices are used, so the slide does not say whether any bank is cheap or "
                              "expensive. It is a way to read returns, not a price target."),
     ("Assumptions.", f"Cost of equity {COE:.0f}% and long-run growth {G:.0f}% are stated assumptions. Change them and "
-                     f"the multiples change. RoTE = net profit / average (equity less AT1 less goodwill and "
-                     f"intangibles)."),
+                     f"the multiples change. RoTE = (net profit less AT1 coupons) / average (equity less AT1 less "
+                     f"goodwill and intangibles)."),
 ], 0.35, 3.6, 7.0, 3.4, size=13, color=MUTED, space_after=9, bullets=True)
 
 # ===========================================================================
@@ -1112,13 +1121,14 @@ cols = [
         "12 annual reports: FY2022, FY2023 and FY2024 of the four groups",
         "2024 and 2023 from the FY2024 reports (2023 restated), 2022 from the FY2023 reports",
         "Statements read with Python (pdfplumber). CET1, NPE, DTC and RWAs as reported at each year end",
+        "NIM and cost of risk cover the same businesses in income and balances when a bank sells one",
     ]),
     ("Checks", [
-        "Automated tests recompute ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the "
+        "Automated tests recompute ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the "
         "statement lines",
         "Assets equal liabilities plus equity for every bank and year",
         "Every statement line and ratio has a report page",
-        "DTC share of CET1 is checked against the figure disclosed by Alpha and Eurobank",
+        "DTC share of CET1 is checked against Alpha's and Eurobank's figures, RoTE against Piraeus' own RoaTBV",
     ]),
     ("Methods", [
         "DuPont breakdown of ROE",

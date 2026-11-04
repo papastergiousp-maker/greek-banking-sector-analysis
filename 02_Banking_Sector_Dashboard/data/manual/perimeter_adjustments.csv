@@ -1,0 +1,16 @@
+bank,year,item,value,unit,source_file,source_page,note
+Alpha Bank,2022,nii_add,150.5,€ million,alpha_holdings_2023.pdf,417,"Net interest income of discontinued operations in 2022 (Alpha Bank Romania, Alpha Leasing Romania, Alpha Insurance Brokers, Alpha Life, Alpha Bank Albania); their balances are inside the balance sheet at end-2021 and end-2022"
+Alpha Bank,2022,impairment_add,-1.6,€ million,alpha_holdings_2023.pdf,417,Impairment losses and provisions to cover credit risk of the same discontinued operations in 2022
+Alpha Bank,2023,nii_add,163.0,€ million,alpha_holdings_2024.pdf,395,Net interest income of discontinued operations in 2023 (Alpha Life and the Romanian subsidiaries); in the balance sheet at end-2022 and held for sale at end-2023
+Alpha Bank,2023,impairment_add,-7.0,€ million,alpha_holdings_2024.pdf,395,Impairment losses and provisions to cover credit risk of the same discontinued operations in 2023
+Alpha Bank,2023,loans_closing_add,3213.1,€ million,alpha_holdings_2023.pdf,403,"Loans and advances to customers of Alpha Bank Romania, Alpha Leasing Romania, Alpha Insurance Brokers and Alpha Life, held for sale at 31.12.2023"
+Alpha Bank,2024,assets_opening_add,-5521.0,€ million,alpha_holdings_2024.pdf,390,"Assets held for sale at 31.12.2023 of the discontinued operations: Project Unicorn (Alpha Life, Alpha Bank Romania) 5,484 + Alpha Leasing Romania and Alpha Insurance Brokers 37"
+Alpha Bank,2024,assets_closing_add,-1222.0,€ million,alpha_holdings_2024.pdf,390,"Assets held for sale at 31.12.2024 of the discontinued operations: Alpha Life 1,192 + Alpha Leasing Romania and Alpha Insurance Brokers 30"
+Eurobank,2022,assets_opening_value,75521.0,€ million,eurobank_holdings_2023.pdf,73,"Continued operations' total assets at 31.12.2021, excluding Eurobank Direktna (Serbia), as disclosed in the APM appendix"
+Eurobank,2022,assets_closing_value,79052.0,€ million,eurobank_holdings_2023.pdf,73,"Continued operations' total assets at 31.12.2022, excluding Eurobank Direktna"
+Eurobank,2022,loans_opening_value,37445.0,€ million,eurobank_holdings_2023.pdf,73,"Loans and advances to customers at amortised cost at 31.12.2021, excluding Eurobank Direktna"
+Eurobank,2022,loans_closing_value,40237.0,€ million,eurobank_holdings_2023.pdf,73,"Loans and advances to customers at amortised cost at 31.12.2022, excluding Eurobank Direktna"
+Eurobank,2023,assets_opening_value,79052.0,€ million,eurobank_holdings_2023.pdf,73,"Continued operations' total assets at 31.12.2022, excluding Eurobank Direktna (sold on 2.11.2023)"
+Eurobank,2023,loans_opening_value,40237.0,€ million,eurobank_holdings_2023.pdf,73,"Loans and advances to customers at amortised cost at 31.12.2022, excluding Eurobank Direktna"
+NBG,2022,nii_add,8.0,€ million,nbg_2022.pdf,286,"Net interest income of discontinued operations in 2022 (Ethniki Insurance, sold 31.3.2022, and CAC Coral, sold 15.7.2022), held for sale at end-2021"
+Piraeus Bank,2022,assets_opening_add,-114.0,€ million,pfh_2022.pdf,119,Assets from discontinued operations at 31.12.2021

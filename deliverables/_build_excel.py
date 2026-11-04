@@ -64,9 +64,9 @@ VERIFIED = {
     "sector_nii": {2022: 5376, 2023: 8099, 2024: 8596},
     "sector_nii_growth_pct": 59.9,
     "sector_net_profit": {2022: 3785, 2023: 3652, 2024: 4326},
-    "walk_2023": {"delta": 2723, "rate": 2891},
-    "walk_2024": {"delta": 497, "rate": 270, "volume": 225},
-    "eurobank_volume_2024": 265,
+    "walk_2023": {"delta": 2723, "rate": 2862},
+    "walk_2024": {"delta": 497, "rate": 157, "volume": 337},
+    "eurobank_volume_2024": 302,
     "sector_underlying_2022": 2577,          # not recomputable from the CSV
     "reported_change_2023_pct": -3.5,
     "underlying_change_2023_pct": 42,        # "about 42%"
@@ -75,7 +75,7 @@ VERIFIED = {
         "NBG": (371, 18.3, 19.3, 420),
         "Eurobank": (402, 16.8, 17.6, 367),
         "Piraeus Bank": (217, 14.5, 15.1, 353),
-        "Alpha Bank": (-118, 16.3, 15.9, 209),
+        "Alpha Bank": (-110, 16.3, 15.9, 209),
     },
     # official EBA 2023 stress test, fully loaded CET1 (%): Dec 2022, adverse end-2025
     "eba_2023": {
@@ -84,9 +84,9 @@ VERIFIED = {
         "NBG": (15.9, 14.5),
         "Piraeus Bank": (11.5, 9.1),
     },
-    "nii_2026_base": {"Eurobank": 2430, "Alpha Bank": 1434, "Piraeus Bank": 1828, "NBG": 1902},
-    "sector_nii_2026_base": 7593,
-    "sector_nii_2026_vs_2024_pct": -11.7,
+    "nii_2026_base": {"Eurobank": 2447, "Alpha Bank": 1508, "Piraeus Bank": 1828, "NBG": 1905},
+    "sector_nii_2026_base": 7688,
+    "sector_nii_2026_vs_2024_pct": -10.6,
     "dtc_total_bn": {2022: 13.5, 2024: 12.0},
     "dtc_to_cet1_2024": {"Eurobank": 36, "Piraeus Bank": 63},
     "ecb_funding_bn": {2022: 35.1, 2023: 14.3, 2024: 2.6},   # all Alpha in 2024
@@ -108,24 +108,29 @@ sector = kpis.groupby("year")[["nii", "operating_income", "net_profit", "loans",
 
 
 def rate_volume_walk(df):
-    """Change in NII split into rate (margin), volume and mix, per bank and year."""
+    """Change in reported NII split into rate (margin), volume, mix and businesses sold, per bank and year.
+
+    NIM and average assets are on the same perimeter as kpis_final.csv (nim_nii / nim_avg_assets).
+    When a business leaves that basis (its NII was added back last year, not this year), its NII of
+    the previous year is taken out of the volume effect. "sold" is what is left: the change in NII of
+    the businesses being sold that the margins include (Alpha 2023 only, about EUR 12m).
+    """
     rows = []
     for bank in BANKS:
         b = df[df.bank == bank].set_index("year")
-        nim = b["nii"] / b["avg_total_assets"]          # unrounded NIM, so the walk adds up
+        nim = b["nim_nii"] / b["nim_avg_assets"]          # unrounded NIM, so the walk adds up
+        added = b["nim_nii"] - b["nii"]
         for yr in (2023, 2024):
             p = yr - 1
             d_nim = nim[yr] - nim[p]
-            d_a = b.loc[yr, "avg_total_assets"] - b.loc[p, "avg_total_assets"]
-            rows.append({
-                "bank": bank, "year": yr,
-                "delta": b.loc[yr, "nii"] - b.loc[p, "nii"],
-                "rate": d_nim * b.loc[p, "avg_total_assets"],
-                "volume": nim[p] * d_a,
-                "mix": d_nim * d_a,
-            })
+            d_a = b.loc[yr, "nim_avg_assets"] - b.loc[p, "nim_avg_assets"]
+            leaving = added[p] if (added[p] > 0 and added[yr] == 0) else 0.0
+            delta = b.loc[yr, "nii"] - b.loc[p, "nii"]
+            rate, volume, mix = d_nim * b.loc[p, "nim_avg_assets"], nim[p] * d_a + leaving, d_nim * d_a
+            rows.append({"bank": bank, "year": yr, "delta": delta, "rate": rate, "volume": volume,
+                         "mix": mix, "sold": delta - rate - volume - mix})
     w = pd.DataFrame(rows)
-    assert ((w.rate + w.volume + w.mix) - w.delta).abs().max() < 0.5
+    assert w["sold"].abs().max() < 15
     return w
 
 
@@ -134,11 +139,11 @@ def stress_test(df24):
     rows = {}
     for bank in BANKS:
         r = df24.loc[bank]
-        nim = r["nii"] / r["avg_total_assets"]
-        cor = -r["impairment"] / r["avg_loans"]
+        nim = r["nim_nii"] / r["nim_avg_assets"]          # same perimeter as kpis_final.csv
+        cor = -r["cor_impairment"] / r["cor_avg_loans"]
         cet1_capital = r["cet1"] / 100 * r["rwa"]
         loans_adv = r["loans"] * (1 + STRESS["loans"])
-        assets_adv = r["avg_total_assets"] + r["loans"] * STRESS["loans"]
+        assets_adv = r["nim_avg_assets"] + r["loans"] * STRESS["loans"]
         nii_adv = (nim + STRESS["nim_bp"] / 10_000) * assets_adv
         imp_adv = (cor + STRESS["cor_bp"] / 10_000) * loans_adv
         pbt_adv = r["pbt"] + (nii_adv - r["nii"]) - (imp_adv + r["impairment"])
@@ -187,14 +192,14 @@ def nii_2026_base_case():
         b = kpis[kpis.bank == bank].sort_values("year")
         slope = np.polyfit([ecb[y] for y in YEARS], b["nim"].tolist(), 1)[0]
         nim26 = b["nim"].iloc[-1] + slope * (2.00 - ecb[2024])
-        assets26 = b["total_assets"].iloc[-1] * 1.02 * 1.01
+        assets26 = b["nim_assets_end"].iloc[-1] * 1.02 * 1.01   # end-2024 assets on the NIM perimeter
         out[bank] = nim26 / 100 * assets26
     return pd.Series(out)
 
 
 walk = rate_volume_walk(kpis)
 stress = stress_test(k24)
-walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix"]].sum()
+walk_sector = walk.groupby("year")[["delta", "rate", "volume", "mix", "sold"]].sum()
 nii_growth = (sector.loc[2024, "nii"] / sector.loc[2022, "nii"] - 1) * 100
 np_2023_reported = (sector.loc[2023, "net_profit"] / sector.loc[2022, "net_profit"] - 1) * 100
 np_2023_underlying = (sector.loc[2023, "net_profit"] / VERIFIED["sector_underlying_2022"] - 1) * 100
@@ -742,16 +747,19 @@ def make_analysis():
         rows = []
         for bank in BANKS:
             r = walk[(walk.bank == bank) & (walk.year == yr)].iloc[0]
-            rows.append([bank, r["delta"], r["rate"], r["volume"], r["mix"]])
+            rows.append([bank, r["delta"], r["rate"], r["volume"], r["mix"], r["sold"]])
         s = walk_sector.loc[yr]
-        rows.append(["Sector", s["delta"], s["rate"], s["volume"], s["mix"]])
+        rows.append(["Sector", s["delta"], s["rate"], s["volume"], s["mix"], s["sold"]])
         row = add_table(ws, row, f"2{'A' if yr == 2023 else 'B'}. NII RATE AND VOLUME WALK, {yr - 1} TO {yr} (€m)",
-                        ["Bank", "Change in NII", "Rate (margin) effect", "Volume effect", "Mix"], rows,
-                        [None, F_INT, F_INT, F_INT, F_INT], bold_last=True)
+                        ["Bank", "Change in NII", "Rate (margin) effect", "Volume effect", "Mix", "Businesses sold"],
+                        rows, [None, F_INT, F_INT, F_INT, F_INT, F_INT], bold_last=True)
         row += 1
     note_row(ws, row - 1, "Rate effect = change in NIM × prior-year average assets. Volume effect = prior-year NIM × change "
-                          "in average assets. Mix = change in NIM × change in average assets. The three add up to the change in "
-                          "NII. Eurobank consolidated Hellenic Bank from 30 June 2024.", last_col)
+                          "in average assets. Mix = change in NIM × change in average assets. NIM and assets on the same "
+                          "perimeter (see Assumptions): Alpha's 2024 volume effect excludes Alpha Bank Romania and Alpha Life, "
+                          "sold to UniCredit. Businesses sold = the change in their NII that the margins include (Alpha "
+                          "2023). The four add up to the change in reported NII. Eurobank consolidated Hellenic Bank from "
+                          "30 June 2024.", last_col)
     row += 1
 
     # 3. Earnings quality
@@ -810,11 +818,11 @@ def make_analysis():
     row += 2
 
     # 6. Valuation
-    rows = [[b, k24.loc[b, "net_profit"], k24.loc[b, "avg_tangible_equity"], k24.loc[b, "rote"] / 100,
-             COE / 100, G / 100, justified_ptbv(k24.loc[b, "rote"])] for b in BANKS]
+    rows = [[b, k24.loc[b, "net_profit"] - k24.loc[b, "at1_coupons"], k24.loc[b, "avg_tangible_equity"],
+             k24.loc[b, "rote"] / 100, COE / 100, G / 100, justified_ptbv(k24.loc[b, "rote"])] for b in BANKS]
     row = add_table(ws, row, "6. VALUATION: JUSTIFIED P/TBV (NOT INVESTMENT ADVICE)",
-                    ["Bank", "Net profit 2024 (€m)", "Average tangible equity (€m)", "RoTE 2024", "CoE (assumed)",
-                     "g (assumed)", "Justified P/TBV"], rows,
+                    ["Bank", "Net profit less AT1 coupons 2024 (€m)", "Average tangible equity (€m)", "RoTE 2024",
+                     "CoE (assumed)", "g (assumed)", "Justified P/TBV"], rows,
                     [None, F_INT, F_INT, F_P1, F_P1, F_P1, F_X])
     note_row(ws, row, "Justified P/TBV = (RoTE - g) / (CoE - g), with CoE 10% and g 2% as stated assumptions. No market "
                       "prices are used. A bank that earns exactly its cost of equity is worth 1.0x tangible book value "
@@ -862,10 +870,14 @@ def make_assumptions():
         ]),
         ("DEFINITIONS", "text", ["Metric", "Definition"], [
             ["ROE", "Net profit attributable / average equity attributable"],
-            ["RoTE", "Net profit / average (equity less AT1 less goodwill and intangibles). AT1 coupons are not deducted"],
+            ["RoTE", "(Net profit less AT1 coupons) / average (equity less AT1 less goodwill and intangibles)"],
             ["ROA", "Net profit / average total assets"],
-            ["NIM", "Net interest income / average total assets"],
-            ["Cost of risk", "Loan impairments / average loans"],
+            ["NIM", "Net interest income / average total assets, with income and assets covering the same businesses"],
+            ["Cost of risk", "Loan impairments / average loans, same perimeter as NIM"],
+            ["Same perimeter", "Businesses sold or being sold (Alpha Bank Romania and Alpha Life, Eurobank Direktna, "
+                               "NBG's insurer) are left out of the income statement but may still be in the balance "
+                               "sheet. Their balances are taken out where the bank discloses them, otherwise their NII "
+                               "and loan impairments are added back (data/manual/perimeter_adjustments.csv)"],
             ["Cost-to-income", "Operating expenses / operating income"],
             ["Loan-to-deposit", "Loans / customer deposits, year end"],
             ["CET1, total capital, NPE ratio", "As reported at each year end"],

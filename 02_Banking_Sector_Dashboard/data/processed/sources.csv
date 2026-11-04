@@ -4,6 +4,7 @@ Alpha Bank,2021,Equity attributable to shareholders,6035.8,alpha_holdings_2022.p
 Alpha Bank,2021,Goodwill and intangible assets,478.2,alpha_holdings_2022.pdf p.108,Comparative column
 Alpha Bank,2021,Loans and advances to customers,36860.4,alpha_holdings_2022.pdf p.108,Comparative column
 Alpha Bank,2021,Total assets,73356.0,alpha_holdings_2022.pdf p.108,31.12.2021 as restated (comparative column)
+Alpha Bank,2022,AT1 coupons,0.0,alpha_holdings_2023.pdf p.152,No AT1 in issue in 2022 (first AT1 issued on 1.2.2023)
 Alpha Bank,2022,Additional Tier 1 instruments,0.0,alpha_holdings_2023.pdf p.152,As printed in the statement
 Alpha Bank,2022,Cash and balances with central banks,12894.8,alpha_holdings_2023.pdf p.152,As printed in the statement
 Alpha Bank,2022,Deposits from customers,50760.9,alpha_holdings_2023.pdf p.152,As printed in the statement
@@ -22,6 +23,8 @@ Alpha Bank,2022,Operating expenses,-856.7,alpha_holdings_2023.pdf p.150,As print
 Alpha Bank,2022,Operating income,1750.8,alpha_holdings_2023.pdf p.150,As printed in the statement
 Alpha Bank,2022,Profit before tax,543.9,alpha_holdings_2023.pdf p.150,As printed in the statement
 Alpha Bank,2022,Profit from operations before impairments,894.1,alpha_holdings_2023.pdf p.150,Operating income + operating expenses
+Alpha Bank,2022,Same perimeter: impairment_add,-1.6,alpha_holdings_2023.pdf p.417,Impairment losses and provisions to cover credit risk of the same discontinued operations in 2022
+Alpha Bank,2022,Same perimeter: nii_add,150.5,alpha_holdings_2023.pdf p.417,"Net interest income of discontinued operations in 2022 (Alpha Bank Romania, Alpha Leasing Romania, Alpha Insurance Brokers, Alpha Life, Alpha Bank Albania); their balances are inside the balance sheet at end-2021 and end-2022"
 Alpha Bank,2022,Total assets,78011.4,alpha_holdings_2023.pdf p.152,As printed in the statement
 Alpha Bank,2022,Total equity,6263.3,alpha_holdings_2023.pdf p.152,As printed in the statement
 Alpha Bank,2022,Total liabilities,71748.1,alpha_holdings_2023.pdf p.152,As printed in the statement
@@ -30,6 +33,7 @@ Alpha Bank,2022,dtc,2700.0,alpha_holdings_2022.pdf p.24,DTAs eligible for conver
 Alpha Bank,2022,npe_ratio,7.8,alpha_holdings_2022.pdf p.22,Management report: single digit NPE ratio (7.8%) on 31.12.2022
 Alpha Bank,2022,rwa,34300.0,alpha_holdings_2022.pdf p.24,Euro 34.3 billion
 Alpha Bank,2022,total_capital_ratio,16.2,alpha_holdings_2023.pdf p.397,Comparative column of the FY2023 table
+Alpha Bank,2023,AT1 coupons,24.0,alpha_holdings_2024.pdf p.290,"Return on capital instruments AT1, deducted in the EPS note"
 Alpha Bank,2023,Additional Tier 1 instruments,400.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2023,Cash and balances with central banks,4219.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2023,Deposits from customers,48449.0,alpha_holdings_2024.pdf p.248,As printed in the statement
@@ -48,6 +52,9 @@ Alpha Bank,2023,Operating expenses,-815.0,alpha_holdings_2024.pdf p.246,As print
 Alpha Bank,2023,Operating income,2129.0,alpha_holdings_2024.pdf p.246,As printed in the statement
 Alpha Bank,2023,Profit before tax,780.0,alpha_holdings_2024.pdf p.246,As printed in the statement
 Alpha Bank,2023,Profit from operations before impairments,1314.0,alpha_holdings_2024.pdf p.246,Operating income + operating expenses
+Alpha Bank,2023,Same perimeter: impairment_add,-7.0,alpha_holdings_2024.pdf p.395,Impairment losses and provisions to cover credit risk of the same discontinued operations in 2023
+Alpha Bank,2023,Same perimeter: loans_closing_add,3213.1,alpha_holdings_2023.pdf p.403,"Loans and advances to customers of Alpha Bank Romania, Alpha Leasing Romania, Alpha Insurance Brokers and Alpha Life, held for sale at 31.12.2023"
+Alpha Bank,2023,Same perimeter: nii_add,163.0,alpha_holdings_2024.pdf p.395,Net interest income of discontinued operations in 2023 (Alpha Life and the Romanian subsidiaries); in the balance sheet at end-2022 and held for sale at end-2023
 Alpha Bank,2023,Total assets,72421.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2023,Total equity,7323.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2023,Total liabilities,65098.0,alpha_holdings_2024.pdf p.248,As printed in the statement
@@ -56,6 +63,7 @@ Alpha Bank,2023,dtc,2600.0,alpha_holdings_2023.pdf p.27,Euro 2.6 billion; 55.5% 
 Alpha Bank,2023,npe_ratio,6.0,alpha_holdings_2023.pdf p.23,Management report: NPE ratio reduced to 6%
 Alpha Bank,2023,rwa,32200.0,alpha_holdings_2023.pdf p.25,Euro 32.2 billion
 Alpha Bank,2023,total_capital_ratio,18.8,alpha_holdings_2023.pdf p.397,As reported
+Alpha Bank,2024,AT1 coupons,48.0,alpha_holdings_2024.pdf p.290,"Return on capital instruments AT1, deducted in the EPS note"
 Alpha Bank,2024,Additional Tier 1 instruments,700.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2024,Cash and balances with central banks,2998.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2024,Deposits from customers,51032.0,alpha_holdings_2024.pdf p.248,As printed in the statement
@@ -74,6 +82,8 @@ Alpha Bank,2024,Operating expenses,-866.0,alpha_holdings_2024.pdf p.246,As print
 Alpha Bank,2024,Operating income,2222.0,alpha_holdings_2024.pdf p.246,As printed in the statement
 Alpha Bank,2024,Profit before tax,816.0,alpha_holdings_2024.pdf p.246,As printed in the statement
 Alpha Bank,2024,Profit from operations before impairments,1356.0,alpha_holdings_2024.pdf p.246,Operating income + operating expenses
+Alpha Bank,2024,Same perimeter: assets_closing_add,-1222.0,alpha_holdings_2024.pdf p.390,"Assets held for sale at 31.12.2024 of the discontinued operations: Alpha Life 1,192 + Alpha Leasing Romania and Alpha Insurance Brokers 30"
+Alpha Bank,2024,Same perimeter: assets_opening_add,-5521.0,alpha_holdings_2024.pdf p.390,"Assets held for sale at 31.12.2023 of the discontinued operations: Project Unicorn (Alpha Life, Alpha Bank Romania) 5,484 + Alpha Leasing Romania and Alpha Insurance Brokers 37"
 Alpha Bank,2024,Total assets,72075.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2024,Total equity,8189.0,alpha_holdings_2024.pdf p.248,As printed in the statement
 Alpha Bank,2024,Total liabilities,63886.0,alpha_holdings_2024.pdf p.248,As printed in the statement
@@ -87,6 +97,7 @@ Eurobank,2021,Equity attributable to shareholders,5539.0,eurobank_holdings_2022.
 Eurobank,2021,Goodwill and intangible assets,269.0,eurobank_holdings_2022.pdf p.98,Comparative column
 Eurobank,2021,Loans and advances to customers,38967.0,eurobank_holdings_2022.pdf p.98,Comparative column
 Eurobank,2021,Total assets,77852.0,eurobank_holdings_2022.pdf p.98,Comparative column
+Eurobank,2022,AT1 coupons,0.0,eurobank_holdings_2023.pdf p.146,No AT1 in issue
 Eurobank,2022,Additional Tier 1 instruments,0.0,eurobank_holdings_2023.pdf p.146,No AT1 line in the balance sheet
 Eurobank,2022,Cash and balances with central banks,14994.0,eurobank_holdings_2023.pdf p.146,As printed in the statement
 Eurobank,2022,Deposits from customers,57239.0,eurobank_holdings_2023.pdf p.146,As printed in the statement
@@ -106,6 +117,10 @@ Eurobank,2022,Operating expenses,-857.0,eurobank_holdings_2023.pdf p.147,As prin
 Eurobank,2022,Operating income,3041.0,eurobank_holdings_2023.pdf p.147,As printed in the statement
 Eurobank,2022,Profit before tax,1751.0,eurobank_holdings_2023.pdf p.147,As printed in the statement
 Eurobank,2022,Profit from operations before impairments,2184.0,eurobank_holdings_2023.pdf p.147,Operating income + operating expenses
+Eurobank,2022,Same perimeter: assets_closing_value,79052.0,eurobank_holdings_2023.pdf p.73,"Continued operations' total assets at 31.12.2022, excluding Eurobank Direktna"
+Eurobank,2022,Same perimeter: assets_opening_value,75521.0,eurobank_holdings_2023.pdf p.73,"Continued operations' total assets at 31.12.2021, excluding Eurobank Direktna (Serbia), as disclosed in the APM appendix"
+Eurobank,2022,Same perimeter: loans_closing_value,40237.0,eurobank_holdings_2023.pdf p.73,"Loans and advances to customers at amortised cost at 31.12.2022, excluding Eurobank Direktna"
+Eurobank,2022,Same perimeter: loans_opening_value,37445.0,eurobank_holdings_2023.pdf p.73,"Loans and advances to customers at amortised cost at 31.12.2021, excluding Eurobank Direktna"
 Eurobank,2022,Total assets,81474.0,eurobank_holdings_2023.pdf p.146,As printed in the statement
 Eurobank,2022,Total equity,6732.0,eurobank_holdings_2023.pdf p.146,As printed in the statement
 Eurobank,2022,Total liabilities,74742.0,eurobank_holdings_2023.pdf p.146,As printed in the statement
@@ -114,6 +129,7 @@ Eurobank,2022,dtc,3402.0,eurobank_holdings_2022.pdf p.6,Eligible DTAs for conver
 Eurobank,2022,npe_ratio,5.2,eurobank_holdings_2022.pdf p.5,As reported
 Eurobank,2022,rwa,41899.0,eurobank_holdings_2022.pdf p.146,Capital management note
 Eurobank,2022,total_capital_ratio,19.2,eurobank_holdings_2022.pdf p.6,As reported
+Eurobank,2023,AT1 coupons,0.0,eurobank_holdings_2023.pdf p.146,No AT1 in issue
 Eurobank,2023,Additional Tier 1 instruments,0.0,eurobank_holdings_2024.pdf p.255,No AT1 line in the balance sheet
 Eurobank,2023,Cash and balances with central banks,10943.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
 Eurobank,2023,Deposits from customers,57442.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
@@ -133,6 +149,8 @@ Eurobank,2023,Operating expenses,-915.0,eurobank_holdings_2024.pdf p.256,As prin
 Eurobank,2023,Operating income,2914.0,eurobank_holdings_2024.pdf p.256,As printed in the statement
 Eurobank,2023,Profit before tax,1542.0,eurobank_holdings_2024.pdf p.256,As printed in the statement
 Eurobank,2023,Profit from operations before impairments,1999.0,eurobank_holdings_2024.pdf p.256,Operating income + operating expenses
+Eurobank,2023,Same perimeter: assets_opening_value,79052.0,eurobank_holdings_2023.pdf p.73,"Continued operations' total assets at 31.12.2022, excluding Eurobank Direktna (sold on 2.11.2023)"
+Eurobank,2023,Same perimeter: loans_opening_value,40237.0,eurobank_holdings_2023.pdf p.73,"Loans and advances to customers at amortised cost at 31.12.2022, excluding Eurobank Direktna"
 Eurobank,2023,Total assets,79781.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
 Eurobank,2023,Total equity,7899.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
 Eurobank,2023,Total liabilities,71882.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
@@ -141,6 +159,7 @@ Eurobank,2023,dtc,3212.0,eurobank_holdings_2023.pdf p.6,As reported
 Eurobank,2023,npe_ratio,3.5,eurobank_holdings_2023.pdf p.4,As reported
 Eurobank,2023,rwa,43395.0,eurobank_holdings_2023.pdf p.194,Capital management note
 Eurobank,2023,total_capital_ratio,19.4,eurobank_holdings_2023.pdf p.6,As reported
+Eurobank,2024,AT1 coupons,0.0,eurobank_holdings_2024.pdf p.255,No AT1 in issue
 Eurobank,2024,Additional Tier 1 instruments,0.0,eurobank_holdings_2024.pdf p.255,No AT1 line in the balance sheet
 Eurobank,2024,Cash and balances with central banks,16131.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
 Eurobank,2024,Deposits from customers,78593.0,eurobank_holdings_2024.pdf p.255,As printed in the statement
@@ -173,6 +192,7 @@ NBG,2021,Equity attributable to shareholders,5750.0,nbg_2022.pdf p.184,Comparati
 NBG,2021,Goodwill and intangible assets,353.0,nbg_2022.pdf p.184,Software
 NBG,2021,Loans and advances to customers,30439.0,nbg_2022.pdf p.184,Comparative column
 NBG,2021,Total assets,83958.0,nbg_2022.pdf p.184,Comparative column
+NBG,2022,AT1 coupons,0.0,nbg_2023.pdf p.241,No AT1 in issue
 NBG,2022,Additional Tier 1 instruments,0.0,nbg_2023.pdf p.241,No AT1 line in the balance sheet
 NBG,2022,Cash and balances with central banks,14226.0,nbg_2023.pdf p.241,As printed in the statement
 NBG,2022,Deposits from customers,55192.0,nbg_2023.pdf p.241,As printed in the statement
@@ -191,6 +211,7 @@ NBG,2022,Operating expenses,-855.0,nbg_2023.pdf p.242,As printed in the statemen
 NBG,2022,Operating income,2355.0,nbg_2023.pdf p.242,As printed in the statement
 NBG,2022,Profit before tax,1155.0,nbg_2023.pdf p.242,As printed in the statement
 NBG,2022,Profit from operations before impairments,1500.0,nbg_2023.pdf p.242,Operating income + operating expenses
+NBG,2022,Same perimeter: nii_add,8.0,nbg_2022.pdf p.286,"Net interest income of discontinued operations in 2022 (Ethniki Insurance, sold 31.3.2022, and CAC Coral, sold 15.7.2022), held for sale at end-2021"
 NBG,2022,Total assets,78113.0,nbg_2023.pdf p.241,As printed in the statement
 NBG,2022,Total equity,6475.0,nbg_2023.pdf p.241,As printed in the statement
 NBG,2022,Total liabilities,71638.0,nbg_2023.pdf p.241,As printed in the statement
@@ -199,6 +220,7 @@ NBG,2022,dtc,3900.0,nbg_2023.pdf p.305,Comparative in the FY2023 report (EUR 3.9
 NBG,2022,npe_ratio,5.2,nbg_2022.pdf p.32,As reported
 NBG,2022,rwa,36400.0,nbg_2022.pdf p.32,EUR 36.4 billion
 NBG,2022,total_capital_ratio,17.7,nbg_2022.pdf p.32,As reported
+NBG,2023,AT1 coupons,0.0,nbg_2023.pdf p.241,No AT1 in issue
 NBG,2023,Additional Tier 1 instruments,0.0,nbg_2024.pdf p.366,No AT1 line in the balance sheet
 NBG,2023,Cash and balances with central banks,9015.0,nbg_2024.pdf p.366,As printed in the statement
 NBG,2023,Deposits from customers,57126.0,nbg_2024.pdf p.366,As printed in the statement
@@ -225,6 +247,7 @@ NBG,2023,dtc,3700.0,nbg_2023.pdf p.305,EUR 3.7 billion
 NBG,2023,npe_ratio,3.7,nbg_2023.pdf p.32,As reported
 NBG,2023,rwa,37700.0,nbg_2023.pdf p.32,EUR 37.7 billion
 NBG,2023,total_capital_ratio,20.2,nbg_2024.pdf p.40,Comparative column of the FY2024 table
+NBG,2024,AT1 coupons,0.0,nbg_2024.pdf p.366,No AT1 in issue
 NBG,2024,Additional Tier 1 instruments,0.0,nbg_2024.pdf p.366,No AT1 line in the balance sheet
 NBG,2024,Cash and balances with central banks,5380.0,nbg_2024.pdf p.366,As printed in the statement
 NBG,2024,Deposits from customers,57593.0,nbg_2024.pdf p.366,As printed in the statement
@@ -256,6 +279,7 @@ Piraeus Bank,2021,Equity attributable to shareholders,5788.0,pfh_2022.pdf p.119,
 Piraeus Bank,2021,Goodwill and intangible assets,267.0,pfh_2022.pdf p.119,Comparative column
 Piraeus Bank,2021,Loans and advances to customers,36598.0,pfh_2022.pdf p.119,Amortised cost 36521 + FVTPL 77
 Piraeus Bank,2021,Total assets,79789.0,pfh_2022.pdf p.119,Comparative column
+Piraeus Bank,2022,AT1 coupons,53.0,piraeus_2023.pdf p.176,Payment to the holders of AT1 capital instrument (statement of changes in equity)
 Piraeus Bank,2022,Additional Tier 1 instruments,600.0,pfh_2023.pdf p.174,As printed in the statement
 Piraeus Bank,2022,Cash and balances with central banks,9653.0,pfh_2023.pdf p.174,As printed in the statement
 Piraeus Bank,2022,Deposits from customers,58372.0,pfh_2023.pdf p.174,As printed in the statement
@@ -274,6 +298,7 @@ Piraeus Bank,2022,Operating expenses,-889.0,pfh_2023.pdf p.172,As printed in the
 Piraeus Bank,2022,Operating income,2582.0,pfh_2023.pdf p.172,As printed in the statement
 Piraeus Bank,2022,Profit before tax,1037.0,pfh_2023.pdf p.172,As printed in the statement
 Piraeus Bank,2022,Profit from operations before impairments,1693.0,pfh_2023.pdf p.172,Operating income + operating expenses
+Piraeus Bank,2022,Same perimeter: assets_opening_add,-114.0,pfh_2022.pdf p.119,Assets from discontinued operations at 31.12.2021
 Piraeus Bank,2022,Total assets,74645.0,pfh_2023.pdf p.174,As printed in the statement
 Piraeus Bank,2022,Total equity,6581.0,pfh_2023.pdf p.174,As printed in the statement
 Piraeus Bank,2022,Total liabilities,68064.0,pfh_2023.pdf p.174,As printed in the statement
@@ -282,6 +307,7 @@ Piraeus Bank,2022,dtc,3541.0,pfh_2022.pdf p.252,DTA eligible for Deferred Tax Cr
 Piraeus Bank,2022,npe_ratio,6.8,pfh_2022.pdf p.104,As reported
 Piraeus Bank,2022,rwa,31178.0,pfh_2022.pdf p.251,As reported
 Piraeus Bank,2022,total_capital_ratio,17.82,pfh_2022.pdf p.251,As reported
+Piraeus Bank,2023,AT1 coupons,53.0,piraeus_2024.pdf p.426,Payment to the holders of AT1 capital instrument (statement of changes in equity)
 Piraeus Bank,2023,Additional Tier 1 instruments,600.0,pfh_2024.pdf p.425,As printed in the statement
 Piraeus Bank,2023,Cash and balances with central banks,10567.0,pfh_2024.pdf p.425,As printed in the statement
 Piraeus Bank,2023,Deposits from customers,59567.0,pfh_2024.pdf p.425,As printed in the statement
@@ -308,6 +334,7 @@ Piraeus Bank,2023,dtc,3303.0,pfh_2023.pdf p.305,EUR 3.3bn included in regulatory
 Piraeus Bank,2023,npe_ratio,3.5,pfh_2023.pdf p.127,As reported
 Piraeus Bank,2023,rwa,32765.0,pfh_2023.pdf p.304,As reported
 Piraeus Bank,2023,total_capital_ratio,17.77,pfh_2023.pdf p.304,As reported
+Piraeus Bank,2024,AT1 coupons,53.0,piraeus_2024.pdf p.427,Payment to the holders of AT1 capital instrument (statement of changes in equity)
 Piraeus Bank,2024,Additional Tier 1 instruments,600.0,pfh_2024.pdf p.425,As printed in the statement
 Piraeus Bank,2024,Cash and balances with central banks,7423.0,pfh_2024.pdf p.425,As printed in the statement
 Piraeus Bank,2024,Deposits from customers,62853.0,pfh_2024.pdf p.425,As printed in the statement

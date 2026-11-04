@@ -1,0 +1,13 @@
+bank,year,value,unit,source_file,source_page,note
+Alpha Bank,2022,0.0,€ million,alpha_holdings_2023.pdf,152,No AT1 in issue in 2022 (first AT1 issued on 1.2.2023)
+Alpha Bank,2023,24.0,€ million,alpha_holdings_2024.pdf,290,"Return on capital instruments AT1, deducted in the EPS note"
+Alpha Bank,2024,48.0,€ million,alpha_holdings_2024.pdf,290,"Return on capital instruments AT1, deducted in the EPS note"
+Eurobank,2022,0.0,€ million,eurobank_holdings_2023.pdf,146,No AT1 in issue
+Eurobank,2023,0.0,€ million,eurobank_holdings_2023.pdf,146,No AT1 in issue
+Eurobank,2024,0.0,€ million,eurobank_holdings_2024.pdf,255,No AT1 in issue
+NBG,2022,0.0,€ million,nbg_2023.pdf,241,No AT1 in issue
+NBG,2023,0.0,€ million,nbg_2023.pdf,241,No AT1 in issue
+NBG,2024,0.0,€ million,nbg_2024.pdf,366,No AT1 in issue
+Piraeus Bank,2022,53.0,€ million,piraeus_2023.pdf,176,Payment to the holders of AT1 capital instrument (statement of changes in equity)
+Piraeus Bank,2023,53.0,€ million,piraeus_2024.pdf,426,Payment to the holders of AT1 capital instrument (statement of changes in equity)
+Piraeus Bank,2024,53.0,€ million,piraeus_2024.pdf,427,Payment to the holders of AT1 capital instrument (statement of changes in equity)

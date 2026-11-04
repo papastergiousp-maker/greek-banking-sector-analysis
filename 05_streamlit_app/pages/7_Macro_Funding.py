@@ -19,6 +19,9 @@ st.set_page_config(page_title="Macro & Funding", page_icon="📡", layout="wide"
 
 # Deposits that Hellenic Bank added when Eurobank consolidated it (Eurobank FY2024 report p.262)
 HELLENIC_BANK_DEPOSITS = 15_800
+# Deposits of Alpha Bank Romania and Alpha Life, held for sale at 31.12.2023 and so outside Alpha's
+# "due to customers" line (Alpha FY2023 report p.403). Romania was sold to UniCredit on 4.11.2024.
+ALPHA_HFS_DEPOSITS_2023 = 4_082
 
 with st.sidebar:
     st.markdown("### 📡 Macro & Funding")
@@ -223,6 +226,13 @@ chg = pd.DataFrame({
 })
 chg.loc["Eurobank", "Change 2022→24"] += f" ({(eb_organic / dep.loc['Eurobank', 2022] - 1) * 100:+.1f}% without Hellenic Bank)"
 st.dataframe(chg, use_container_width=True, height=215)
+_a22, _a23 = dep.loc["Alpha Bank", 2022], dep.loc["Alpha Bank", 2023]
+st.caption(
+    f"Alpha's deposits seem to fall in 2023 ({(_a23 / _a22 - 1) * 100:+.1f}%) because €{ALPHA_HFS_DEPOSITS_2023/1000:.1f}bn "
+    "of deposits of Alpha Bank Romania and Alpha Life were moved to held for sale at end-2023 (FY2023 report p.403). "
+    f"With them, its deposits rose {((_a23 + ALPHA_HFS_DEPOSITS_2023) / _a22 - 1) * 100:+.1f}% (the report itself gives +3%). "
+    "The Romanian bank was sold to UniCredit in November 2024, so it is also out of the 2024 figures."
+)
 
 st.divider()
 

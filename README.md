@@ -13,7 +13,7 @@
 ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?logo=plotly&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)
 ![Power BI](https://img.shields.io/badge/Power_BI-DAX-F2C811?logo=powerbi&logoColor=black)
-![pytest](https://img.shields.io/badge/pytest-40_passing-2ECC40?logo=pytest&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-66_passing-2ECC40?logo=pytest&logoColor=white)
 [![codecov](https://codecov.io/gh/papastergiousp-maker/greek-banking-sector-analysis/branch/main/graph/badge.svg)](https://codecov.io/gh/papastergiousp-maker/greek-banking-sector-analysis)
 ![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)
 
@@ -29,12 +29,13 @@ The short answer is in [`03_analysis/00_executive_summary.ipynb`](03_analysis/00
 
 ### What the numbers say
 
-- **Rates drove the income.** Sector net interest income (NII) rose 60%, from €5.4bn in 2022 to €8.6bn in 2024. In a rate/volume walk the margin explains all of the 2023 increase. In 2024 NII rose €497m, and €225m of that came from balance sheet growth, mostly Eurobank's consolidation of Hellenic Bank.
-- **Different leaders on different measures.** In 2024 Eurobank had the highest return on equity (17.2%, RoTE 18.0%), NBG the highest net interest margin (3.15%) and CET1 ratio (18.3%), and Piraeus the lowest cost-to-income ratio (31.8%). Alpha had the lowest ROE (8.5%), but its CET1 ratio rose the most (13.2% to 16.3%).
+- **Rates drove the income.** Sector net interest income (NII) rose 60%, from €5.4bn in 2022 to €8.6bn in 2024. In a rate/volume walk the margin explains all of the 2023 increase. In 2024 NII rose €497m, and €337m of that came from balance sheet growth, mostly Eurobank's consolidation of Hellenic Bank.
+- **Different leaders on different measures.** In 2024 Eurobank had the highest return on equity (17.2%, RoTE 18.0%), NBG the highest net interest margin (3.15%) and CET1 ratio (18.3%), and Piraeus the lowest cost-to-income ratio (31.8%). Alpha had the lowest ROE (8.5%) and margin (2.39%), but its CET1 ratio rose the most (13.2% to 16.3%).
+- **Headline returns are not reported returns.** Alpha's own 2024 figure, a 14.0% normalised return on tangible book value, leaves out €207m of one-offs (NPE sales, a voluntary exit scheme) and removes capital above its target and accrued dividends from the equity base. On reported profit after AT1 coupons its RoTE is 9.0%, and 12.1% without the one-offs. Piraeus defines its return the same way as RoTE here, and the two match (12.3% in 2023, 15.0% in 2024).
 - **2022 is not a clean base year.** One-off gains lifted 2022 profit at all four banks. On reported figures sector profit fell 3.5% in 2023; on underlying figures it rose about 42%.
 - **Capital quality differs more than the ratios suggest.** Deferred tax credits, a tax claim on the Greek State counted in CET1, were 36% of CET1 capital at Eurobank and 63% at Piraeus at the end of 2024.
-- **Stress.** In a simple one-year stress test (cost of risk +200bp, loans −15%, NIM −50bp, no dividends) only Alpha makes a loss (−€118m), and all four CET1 ratios stay above 15%. In the official EBA 2023 stress test Alpha also had the lowest adverse result (8.9% fully loaded CET1 at end-2025).
-- **Outlook.** The ECB deposit rate fell to 2.00% in June 2025. A base scenario puts sector NII at €7.6bn in 2026 (−12% vs 2024). This is a rough guide: it assumes margins fall as fast as they rose, while banks hedge part of their rate risk.
+- **Stress.** In a simple one-year stress test (cost of risk +200bp, loans −15%, NIM −50bp, no dividends) only Alpha makes a loss (−€110m), and all four CET1 ratios stay above 15%. In the official EBA 2023 stress test Alpha also had the lowest adverse result (8.9% fully loaded CET1 at end-2025).
+- **Outlook.** The ECB deposit rate fell to 2.00% in June 2025. A base scenario puts sector NII at €7.7bn in 2026 (−11% vs 2024). This is a rough guide: it assumes margins fall as fast as they rose, while banks hedge part of their rate risk.
 
 ---
 
@@ -53,9 +54,11 @@ In 2025 each holding company merged with its bank, so the listed company is now 
 
 **One basis for every bank.** Each year comes from the latest report that contains it: 2024 and 2023 from the FY2024 reports (2023 restated), 2022 from the FY2023 reports (2022 restated). This matters: bank-level and holding-level reports, and first-published and restated figures, can differ by hundreds of millions.
 
+**Same businesses in income and balances.** Alpha sold Alpha Bank Romania to UniCredit in November 2024 and agreed to sell it 51% of Alpha Life; Eurobank sold Eurobank Direktna (Serbia) in 2023; NBG sold its insurer in 2022. The reports show these as discontinued operations: the income statement leaves them out, while the balance sheet still held them for a while, inside its lines or as held for sale. NIM and cost of risk put both on the same footing with each bank's own disclosures: Eurobank publishes its continuing-operations balances, Alpha's 2024 assets held for sale are taken out, and where the report gives no balances (Alpha 2022–2023, NBG 2022) the businesses' net interest income and loan impairments are added back from the discontinued-operations note. The statement lines stay as printed. Without this Alpha's NIM came out about 0.2pp too low (1.55%, 2.21%, 2.28% instead of 1.75%, 2.42%, 2.39%), and its loans and deposits seemed to fall in 2023 when, with the Romanian bank and Alpha Life, they rose 1.6% and 3.5%. Amounts and pages: `data/manual/perimeter_adjustments.csv`.
+
 **Checks.**
 - Every statement line and ratio has its report file and PDF page (`sources` table, 335 numbers).
-- 40 pytest tests re-derive ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines, check the balance sheet identity, compare key figures with the reports, compare the DTC share of CET1 with the banks' own disclosures, and compare ECB funding with the total for the Greek banking system.
+- 66 pytest tests re-derive ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines (and the perimeter and AT1 coupon files), check the balance sheet identity, compare key figures with the reports, compare ratios with the banks' own figures where the definition is the same (Piraeus RoTE, Alpha ROA and loans to deposits, Eurobank 2022 cost of risk, the DTC share of CET1), and compare ECB funding with the total for the Greek banking system.
 - GitHub Actions runs the tests, eight notebooks and all eight Streamlit pages on every push.
 
 ---
@@ -65,9 +68,9 @@ In 2025 each holding company merged with its bank, so the listed company is now 
 ```mermaid
 flowchart LR
     PDFs["12 annual reports\n4 listed groups x FY2022-FY2024"] --> extract["pipeline/extract_statements.py\npdfplumber, 16 statement pages"]
-    manual["data/manual\nratios, ECB data\n(each with PDF page)"] --> build
+    manual["data/manual\nratios, ECB data, perimeter,\nAT1 coupons (each with PDF page)"] --> build
     extract --> build["pipeline/build_dataset.py\nKPIs on average balances"]
-    build --> tests["pytest\n40 tests"]
+    build --> tests["pytest\n66 tests"]
     build --> SQLite[("SQLite\nkpis, statements, sources,\nEBA, ECB tables")]
     SQLite --> analysis["03_analysis\nDuPont, CAMELS, peers,\nNII walk, earnings quality"]
     SQLite --> forecast["04_forecasting\nNII scenarios, stress test"]
@@ -84,10 +87,10 @@ Averages are (opening + closing) / 2.
 | KPI | Formula |
 |-----|---------|
 | ROE | Net profit attributable / average equity attributable to shareholders |
-| RoTE | Net profit attributable / average (equity − AT1 − goodwill and intangibles) |
+| RoTE | (Net profit attributable − AT1 coupons) / average (equity − AT1 − goodwill and intangibles) |
 | ROA | Net profit attributable / average total assets |
-| NIM | Net interest income / average total assets |
-| Cost of risk | Loan impairments / average loans |
+| NIM | Net interest income / average total assets, same businesses in both (see above) |
+| Cost of risk | Loan impairments / average loans, same businesses in both |
 | Cost-to-income | Operating expenses / operating income |
 | Loan-to-deposit | Loans / customer deposits (year end) |
 | CET1, NPE ratio | As reported by each bank |
@@ -108,7 +111,7 @@ Field-level details: [DATA_DICTIONARY.md](02_Banking_Sector_Dashboard/data/DATA_
 | **Scenarios and stress testing**: NII scenarios by ECB rate path, one-year stress test, official EBA 2023 results for context | `04_forecasting/`, Streamlit Forecast page |
 | **Capital analysis**: CET1, deferred tax credits and CET1 without them, ECB funding repayment | Streamlit DTC and Macro pages |
 | **Valuation logic**: RoTE against an assumed cost of equity, justified P/TBV (no market prices, not investment advice) | Streamlit Investment Thesis page |
-| **Data quality**: 40 tests, CI on every push | `tests/`, `.github/workflows/ci.yml` |
+| **Data quality**: 66 tests, CI on every push | `tests/`, `.github/workflows/ci.yml` |
 | **Dashboards**: Streamlit app, browser-only sql.js dashboard, Power BI with DAX | `05_streamlit_app/`, `docs/`, `01_eurobank_pipeline/powerbi/` |
 | **Excel model and deck**: built from the database with openpyxl and python-pptx | `deliverables/` |
 | **Text-to-SQL**: questions in plain English answered with SQL written by the Claude API | `06_llm_qa/01_text_to_sql.ipynb` |
@@ -124,7 +127,7 @@ git clone https://github.com/papastergiousp-maker/greek-banking-sector-analysis.
 cd greek-banking-sector-analysis
 pip install -r requirements.txt
 
-pytest tests/ -v                          # 40 tests
+pytest tests/ -v                          # 66 tests
 streamlit run 05_streamlit_app/app.py     # or: docker compose up --build, then http://localhost:8501
 ```
 
@@ -188,10 +191,10 @@ The four listed groups on the same definitions. Open the [dashboard](https://phy
 |:-----|----:|-----------:|-------------:|----:|-----:|-----:|----------:|
 | Eurobank | 2,507 | 1,448 | 101,150 | 17.2% | 18.0% | 16.8% | 2.9% |
 | NBG | 2,356 | 1,158 | 74,957 | 14.4% | 15.5% | 18.3% | 2.6% |
-| Piraeus Bank | 2,088 | 1,066 | 80,044 | 13.7% | 15.7% | 14.5% | 2.6% |
-| Alpha Bank | 1,645 | 654 | 72,075 | 8.5% | 9.7% | 16.3% | 3.8% |
+| Piraeus Bank | 2,088 | 1,066 | 80,044 | 13.7% | 15.0% | 14.5% | 2.6% |
+| Alpha Bank | 1,645 | 654 | 72,075 | 8.5% | 9.0% | 16.3% | 3.8% |
 
-Eurobank 2024 includes Hellenic Bank (Cyprus) from 30 June 2024.
+Eurobank 2024 includes Hellenic Bank (Cyprus) from 30 June 2024. Alpha's NII excludes Alpha Bank Romania and Alpha Life, sold to UniCredit; its total assets include Alpha Life, held for sale. RoTE is after AT1 coupons.
 
 ---
 
@@ -228,7 +231,7 @@ greek-banking-sector-analysis/
 1. Yearly data only, so intra-year effects (for example deposit repricing) cannot be measured.
 2. Each bank presents income and costs in its own way, so cost-to-income ratios are close but not perfectly comparable.
 3. The stress test is one year and static, with RWAs unchanged; the NII scenarios rest on three yearly points per bank.
-4. AT1 coupons are not deducted in RoTE, which flatters Alpha and Piraeus slightly.
+4. NBG's 2022 average assets include its insurer, sold in March 2022 and held for sale at end-2021, whose income is mostly insurance results rather than net interest income; NBG's 2022 NIM is therefore slightly low.
 5. FY2025 results are now published. Adding them, as reported by the merged banks, is the natural next step and a test for the 2025 scenario.
 6. The valuation page uses an assumed cost of equity and growth rate; no market prices are used.
 

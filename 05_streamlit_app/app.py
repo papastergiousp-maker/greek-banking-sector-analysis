@@ -205,8 +205,8 @@ st.divider()
 st.subheader("Key Takeaways")
 cols = st.columns(3)
 nbg, eb, pb = k24.loc["NBG"], k24.loc["Eurobank"], k24.loc["Piraeus Bank"]
-pb_np_at_2023_cor = pb["net_profit"] - (k23.loc["Piraeus Bank", "cost_of_risk"] / 100 * pb["avg_loans"]
-                                        + pb["impairment"]) * (1 - 0.29)
+pb_np_at_2023_cor = pb["net_profit"] - (k23.loc["Piraeus Bank", "cost_of_risk"] / 100 * pb["cor_avg_loans"]
+                                        + pb["cor_impairment"]) * (1 - 0.29)
 cols[0].info(
     "**Highest margin and capital: NBG**\n\n"
     f"NIM {nbg['nim']:.2f}% of average assets and CET1 {nbg['cet1']:.1f}%, both the highest of the four, "

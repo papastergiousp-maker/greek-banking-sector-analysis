@@ -93,10 +93,10 @@ Averages are (opening + closing) / 2. Ratios are in %.
 | `intangibles` | Goodwill and intangible assets |
 | `tangible_equity` | equity − at1 − intangibles |
 | `roe` | net_profit / average equity |
-| `rote` | net_profit / average tangible equity. AT1 coupons are not deducted. |
+| `rote` | (net_profit − at1_coupons) / average tangible equity |
 | `roa` | net_profit / average total assets |
-| `nim` | nii / average total assets |
-| `cost_of_risk` | −impairment / average loans |
+| `nim` | nim_nii / nim_avg_assets (same perimeter, see the notes below) |
+| `cost_of_risk` | −cor_impairment / cor_avg_loans (same perimeter) |
 | `cost_to_income` | −operating_expenses / operating_income |
 | `loan_to_deposit` | loans / deposits, year end |
 | `fee_share` | fees / operating_income |
@@ -106,7 +106,10 @@ Averages are (opening + closing) / 2. Ratios are in %.
 | `dtc` | Deferred tax credits included in regulatory capital (DTAs that can be converted into a claim on the Greek State under article 27A of Law 4172/2013) |
 | `rwa` | Risk-weighted assets |
 | `dtc_to_cet1` | dtc / (cet1 × rwa) |
-| `avg_equity`, `avg_tangible_equity`, `avg_total_assets`, `avg_loans` | The averages used above |
+| `avg_equity`, `avg_tangible_equity`, `avg_total_assets`, `avg_loans` | Averages of the printed balances (used in ROE, RoTE, ROA) |
+| `at1_coupons` | AT1 coupons paid in the year (`data/manual/at1_coupons.csv`) |
+| `nim_nii`, `nim_avg_assets`, `nim_assets_end` | NII, average and year-end total assets on the same perimeter, used in `nim` |
+| `cor_impairment`, `cor_avg_loans` | Loan impairments and average loans on the same perimeter, used in `cost_of_risk` |
 
 ## Other tables
 
@@ -124,6 +127,7 @@ Averages are (opening + closing) / 2. Ratios are in %.
 - **Eurobank 2024** includes Hellenic Bank (Cyprus), consolidated from 30 June 2024. It added €15.8bn of deposits and €295m of 2024 NII (Eurobank FY2024 report, p.4 and p.262).
 - **CET1 ratios** are as reported, and the banks treat FY2024 profit and dividends differently. NBG's 18.3% includes FY2024 profit with a 50% payout accrual (FY2024 report p.40); its statutory note shows 18.0% with the accrual approved by the ECB (p.445). Alpha's 16.3% includes profit after the dividend provision (p.387). Piraeus' 14.47% includes FY2024 profit (p.566). Eurobank's 16.8% is before the accrual for its FY2024 dividend; pro forma for that accrual and for projects Solar, Leon and Wave VI it is 15.7% (p.6).
 - **Piraeus DTC 2024** is the amount included in regulatory capital: €3,248m eligible DTAs less a €128m prudential amortisation adjustment (FY2024 report p.567–568).
+- **Same perimeter for NIM and cost of risk.** Alpha (Alpha Bank Romania, Alpha Life, Alpha Leasing Romania), Eurobank (Eurobank Direktna, Serbia), NBG (Ethniki Insurance, CAC Coral) and Piraeus (a small disposal group) show businesses sold or being sold as discontinued operations: their income is left out of the income statement while their balances may still be in the balance sheet. `data/manual/perimeter_adjustments.csv` puts income and balances on the same footing with the banks' own disclosures: Eurobank's continuing-operations balances (FY2023 report p.73); Alpha's assets held for sale taken out in 2024 (FY2024 p.390); where the report gives no balances (Alpha 2022–2023, NBG 2022), the discontinued operations' net interest income and loan impairments are added back instead (Alpha FY2023 p.417 and FY2024 p.395; NBG FY2022 p.286), and Alpha's loans held for sale at end-2023 are added back (FY2023 p.403). The printed lines are unchanged.
 - **NPE ratios** follow each bank's own definition.
 - **Operating income and expenses** follow each bank's own presentation, so cost-to-income ratios are close but not perfectly comparable.
 
@@ -135,6 +139,7 @@ Averages are (opening + closing) / 2. Ratios are in %.
 |------|--------|
 | October 2026 | Dataset rebuilt from the annual reports of the four listed groups with an automated extractor (`pipeline/`), every number traced to a PDF page. Earlier versions mixed bank-level and holding-level reports, mixed first-published and restated years, used year-end instead of average balances, and contained some estimated ratios. All of those values were replaced. |
 | October 2026 | Added amounts due to the ECB and central banks (`ecb_funding`) and the ECB deposit rate (`ecb_rates`) as sourced tables. |
+| November 2026 | NIM and cost of risk put on the same perimeter for discontinued operations (biggest change: Alpha NIM 2022–2024 from 1.55%, 2.21%, 2.28% to 1.75%, 2.42%, 2.39%). RoTE now deducts AT1 coupons (Alpha 2024 9.7% to 9.0%, Piraeus 2024 15.7% to 15.0%, which matches Piraeus' own RoaTBV). Statement lines unchanged. |
 
 ---
 

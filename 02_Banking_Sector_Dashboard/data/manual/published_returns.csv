@@ -1,0 +1,6 @@
+bank,year,metric,value,unit,source,note
+Piraeus Bank,2023,RoaTBV,12.3,%,piraeus_2024.pdf p.124,"Piraeus APM: net profit minus AT1 coupon over average tangible book value (average of the two year ends)"
+Piraeus Bank,2024,RoaTBV,15.0,%,piraeus_2024.pdf p.124,"Piraeus APM: net profit minus AT1 coupon over average tangible book value (average of the two year ends)"
+Alpha Bank,2023,Normalised profit after tax,787.0,€ million,alpha_holdings_2024.pdf p.442,"Reported 618 less excluded one-off results (APM appendix)"
+Alpha Bank,2024,Normalised profit after tax,861.0,€ million,alpha_holdings_2024.pdf p.441,"Reported 654 plus 207 of excluded one-off results: NPE transactions, voluntary separation scheme, transformation costs (APM appendix)"
+Alpha Bank,2024,Normalised RoTBV,14.0,%,"Alpha Bank FY2024 results press release, https://athexgroup.gr/documents/10180/7669626/278_1432_2025_English_2.pdf/f923125d-0b3a-43c7-9ceb-6cebcde0af6d","Normalised profit after AT1 coupons over average TBV, adjusted to exclude capital above the management target and dividends accrued but not paid"

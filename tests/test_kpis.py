@@ -49,6 +49,16 @@ def opening():
     return op.pivot_table(index=["bank", "year"], columns="metric", values="value", aggfunc="first")
 
 
+@pytest.fixture(scope="module")
+def perimeter():
+    return pd.read_csv(MANUAL / "perimeter_adjustments.csv")
+
+
+@pytest.fixture(scope="module")
+def coupons():
+    return pd.read_csv(MANUAL / "at1_coupons.csv").set_index(["bank", "year"])["value"]
+
+
 def prior(wide, opening, bank, year, metric):
     if year == 2022:
         return opening.loc[(bank, 2021), metric]
@@ -95,6 +105,14 @@ class TestSources:
         r = pd.read_csv(MANUAL / "regulatory_ratios.csv")
         assert r["source_file"].notna().all() and (r["source_page"] > 0).all()
         assert len(r) == 4 * 3 * 5  # 4 banks x 3 years x 5 measures
+
+    def test_perimeter_and_coupon_files_have_a_page(self, perimeter):
+        for df in (perimeter, pd.read_csv(MANUAL / "at1_coupons.csv")):
+            assert df["source_file"].str.match(r"^\w+_20\d\d\.pdf$").all()
+            assert (df["source_page"] > 0).all()
+        items = {"nii_add", "impairment_add"} | {
+            f"{a}_{b}_{c}" for a in ("assets", "loans") for b in ("opening", "closing") for c in ("value", "add")}
+        assert set(perimeter["item"]) <= items
 
     def test_sources_table_complete(self):
         s = pd.read_csv(PROC / "sources.csv")
@@ -152,11 +170,48 @@ class TestKPIs:
                   + prior(wide, opening, bank, year, "Loans and advances to customers")) / 2
         assert k["roe"] == pytest.approx(np_ / avg_eq * 100, abs=0.06)
         assert k["roa"] == pytest.approx(np_ / avg_ta * 100, abs=0.006)
-        assert k["nim"] == pytest.approx(w["Net interest income"] / avg_ta * 100, abs=0.006)
-        assert k["cost_of_risk"] == pytest.approx(-w["Impairment losses on loans"] / avg_ln * 100, abs=0.006)
         assert k["cost_to_income"] == pytest.approx(-w["Operating expenses"] / w["Operating income"] * 100, abs=0.06)
         assert k["loan_to_deposit"] == pytest.approx(
             w["Loans and advances to customers"] / w["Deposits from customers"] * 100, abs=0.06)
+
+    @pytest.mark.parametrize("bank", sorted(BANKS))
+    @pytest.mark.parametrize("year", sorted(YEARS))
+    def test_margin_and_cost_of_risk_same_perimeter(self, kpis, wide, opening, perimeter, bank, year):
+        """NIM and cost of risk re-derived from the printed lines and the perimeter file."""
+        k = kpis.set_index(["bank", "year"]).loc[(bank, year)]
+        w = wide.loc[(bank, year)]
+        bal = {
+            "assets_opening": prior(wide, opening, bank, year, "Total assets"),
+            "assets_closing": w["Total assets"],
+            "loans_opening": prior(wide, opening, bank, year, "Loans and advances to customers"),
+            "loans_closing": w["Loans and advances to customers"],
+        }
+        nii, imp = w["Net interest income"], w["Impairment losses on loans"]
+        for r in perimeter[(perimeter.bank == bank) & (perimeter.year == year)].itertuples():
+            if r.item == "nii_add":
+                nii += r.value
+            elif r.item == "impairment_add":
+                imp += r.value
+            else:
+                name, kind = r.item.rsplit("_", 1)
+                bal[name] = r.value if kind == "value" else bal[name] + r.value
+        avg_ta = (bal["assets_opening"] + bal["assets_closing"]) / 2
+        avg_ln = (bal["loans_opening"] + bal["loans_closing"]) / 2
+        assert k["nim"] == pytest.approx(nii / avg_ta * 100, abs=0.006)
+        assert k["cost_of_risk"] == pytest.approx(-imp / avg_ln * 100, abs=0.006)
+
+    @pytest.mark.parametrize("bank", sorted(BANKS))
+    @pytest.mark.parametrize("year", sorted(YEARS))
+    def test_rote_after_at1_coupons(self, kpis, wide, opening, coupons, bank, year):
+        k = kpis.set_index(["bank", "year"]).loc[(bank, year)]
+        w = wide.loc[(bank, year)]
+        te = lambda eq, at1, ga: eq - at1 - ga  # noqa: E731
+        cur = te(w["Equity attributable to shareholders"], w["Additional Tier 1 instruments"],
+                 w["Goodwill and intangible assets"])
+        pre = te(*(prior(wide, opening, bank, year, m) for m in (
+            "Equity attributable to shareholders", "Additional Tier 1 instruments", "Goodwill and intangible assets")))
+        np_ = w["Net profit attributable to shareholders"] - coupons[(bank, year)]
+        assert k["rote"] == pytest.approx(np_ / ((cur + pre) / 2) * 100, abs=0.06)
 
     def test_yoy_growth(self, kpis):
         k = kpis.sort_values(["bank", "year"]).copy()
@@ -190,6 +245,19 @@ class TestReportedFigures:
     def test_value(self, kpis, bank, year, col, value):
         got = kpis.set_index(["bank", "year"]).loc[(bank, year), col]
         assert got == pytest.approx(value, abs=0.05)
+
+    def test_matches_banks_own_ratios(self, kpis):
+        k = kpis.set_index(["bank", "year"])
+        # Piraeus APM: RoaTBV = (net profit - AT1 coupon) / average TBV: 12.3% FY2023, 15.0% FY2024 (FY2024 report p.124)
+        assert k.loc[("Piraeus Bank", 2023), "rote"] == pytest.approx(12.3, abs=0.06)
+        assert k.loc[("Piraeus Bank", 2024), "rote"] == pytest.approx(15.0, abs=0.06)
+        # Alpha: total return on assets 0.91% for 2024 (FY2024 report p.329)
+        assert k.loc[("Alpha Bank", 2024), "roa"] == pytest.approx(0.91, abs=0.006)
+        # Alpha APM loans to deposits: 75% (2023) and 77% (2024) (FY2024 report p.440)
+        assert k.loc[("Alpha Bank", 2023), "loan_to_deposit"] == pytest.approx(75, abs=0.5)
+        assert k.loc[("Alpha Bank", 2024), "loan_to_deposit"] == pytest.approx(77, abs=0.5)
+        # Eurobank 2022 cost of risk on continuing operations: 276 / 38,834 = 0.71% (FY2023 report p.72)
+        assert k.loc[("Eurobank", 2022), "cost_of_risk"] == pytest.approx(0.71, abs=0.006)
 
     def test_ratio_ranges(self, kpis):
         assert kpis["cet1"].between(10, 25).all()

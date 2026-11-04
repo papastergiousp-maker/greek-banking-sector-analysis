@@ -429,7 +429,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
     <div class="chart-card">
       <div class="chart-header">
-        <div><div class="chart-title">Cost of Risk — 3-Year Trend</div><div class="chart-subtitle">Loan impairments / average loans · SELECT bank, year, cost_of_risk FROM kpis</div></div>
+        <div><div class="chart-title">Cost of Risk — 3-Year Trend</div><div class="chart-subtitle">Loan impairments / average loans, same perimeter · SELECT bank, year, cost_of_risk FROM kpis</div></div>
         <span class="chart-tag">Credit quality</span>
       </div>
       <div id="chart-cor" style="height:210px;"></div>
@@ -454,7 +454,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
     <div class="chart-card">
       <div class="chart-header">
-        <div><div class="chart-title">Net Interest Margin — Trend</div><div class="chart-subtitle">NII / average total assets · SELECT bank, year, nim FROM kpis</div></div>
+        <div><div class="chart-title">Net Interest Margin — Trend</div><div class="chart-subtitle">NII / average total assets, same perimeter · SELECT bank, year, nim FROM kpis</div></div>
         <span class="chart-tag" id="tag-nim">—</span>
       </div>
       <div id="chart-nim" style="height:210px;"></div>
@@ -598,7 +598,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
           <tbody id="val-tbody"></tbody>
         </table></div>
         <div class="val-note">
-          RoTE = net profit / average tangible equity (equity attributable − AT1 − goodwill and intangibles).
+          RoTE = (net profit − AT1 coupons) / average tangible equity (equity attributable − AT1 − goodwill and intangibles).
           Justified P/TBV = (RoTE − g) / (CoE − g), with an assumed cost of equity of 10% and growth of 2%
           (the defaults of the Streamlit app). A bank that earns exactly its cost of equity is worth 1.0x tangible book value.
         </div>
@@ -858,14 +858,19 @@ const set  = (id, html) => { const el = document.getElementById(id); if (el) el.
 
 // ─── TEXT COMPUTED FROM THE DATABASE ──────────────────────────────────────────
 function rateVolume(y) {
-  // Sector NII change from y-1 to y = rate (margin) + volume + mix, on average assets
-  const out = {d:0, rate:0, vol:0, mix:0, volBy:{}};
+  // Change in reported sector NII from y-1 to y = rate (margin) + volume + mix + businesses sold.
+  // NIM and average assets on the same perimeter as kpis.nim (nim_nii / nim_avg_assets); when a business
+  // leaves that basis, its NII of the previous year is taken out of the volume effect.
+  const out = {d:0, rate:0, vol:0, mix:0, sold:0, volBy:{}};
   BANKS.forEach(b => {
     const p = K(b,y-1), c = K(b,y);
-    const nimP = p.nii / p.avg_total_assets, nimC = c.nii / c.avg_total_assets;
-    const dA = c.avg_total_assets - p.avg_total_assets, dN = nimC - nimP;
-    out.rate += dN * p.avg_total_assets; out.vol += nimP * dA; out.mix += dN * dA;
-    out.d += c.nii - p.nii; out.volBy[b] = nimP * dA;
+    const nimP = p.nim_nii / p.nim_avg_assets, nimC = c.nim_nii / c.nim_avg_assets;
+    const dA = c.nim_avg_assets - p.nim_avg_assets, dN = nimC - nimP;
+    const addP = p.nim_nii - p.nii, addC = c.nim_nii - c.nii;
+    const leaving = (addP > 0 && addC === 0) ? addP : 0;
+    const d = c.nii - p.nii, rate = dN * p.nim_avg_assets, vol = nimP * dA + leaving, mix = dN * dA;
+    out.rate += rate; out.vol += vol; out.mix += mix; out.sold += d - rate - vol - mix;
+    out.d += d; out.volBy[b] = vol;
   });
   return out;
 }
@@ -922,6 +927,7 @@ function renderText() {
   set('cm1', `Sector NII rose from €${(n22/1000).toFixed(1)}bn in 2022 to €${(n24/1000).toFixed(1)}bn in 2024 (${sgn(g,0)}%) as the ECB deposit rate averaged ${ECB[2022].avg.toFixed(2)}%, ${ECB[2023].avg.toFixed(2)}% and ${ECB[2024].avg.toFixed(2)}%. ` +
     `In a rate/volume walk on average assets, the margin explains ${(w23.rate/w23.d*100).toFixed(0)}% of the 2023 increase (€${m0(w23.rate)}m of €${m0(w23.d)}m). ` +
     `In 2024 NII rose €${m0(w24.d)}m: €${m0(w24.rate)}m from the margin and €${m0(w24.vol)}m from balance sheet growth, of which Eurobank €${m0(w24.volBy['Eurobank'])}m after it consolidated Hellenic Bank. ` +
+    `Margins and assets cover the same businesses, so Alpha's Romanian bank and Alpha Life, sold to UniCredit, do not count as lower volume. ` +
     `The deposit rate fell to 2.00% in June 2025, so the margin is now a headwind.`);
 
   // Commentary 2: cost efficiency
@@ -986,7 +992,9 @@ function renderText() {
     maxGap < 0.05
       ? `Balance sheet identity holds exactly for all 12 bank-years: total assets = total liabilities + total equity.`
       : `Balance sheet identity holds for all 12 bank-years: total assets − liabilities − equity is at most €${maxGap.toFixed(1)}m (rounding in the reports).`,
-    `40 automated tests (pytest, run on every push) re-derive ROE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines.`,
+    `66 automated tests (pytest, run on every push) re-derive ROE, RoTE, ROA, NIM, cost of risk, cost-to-income and loan-to-deposit from the statement lines.`,
+    `NIM and cost of risk cover the same businesses in income and balances: Alpha's Romanian bank and Alpha Life, Eurobank's Serbian bank and NBG's insurer are discontinued operations, handled with each bank's own disclosures (table sources, items "Same perimeter").`,
+    `RoTE deducts AT1 coupons and matches Piraeus' own RoaTBV: ${kv('Piraeus Bank',2023,'rote').toFixed(1)}% and ${kv('Piraeus Bank',2024,'rote').toFixed(1)}% vs 12.3% and 15.0% reported (FY2024 report p.124). Alpha's headline 14.0% normalised RoTBV leaves out €207m of one-offs and part of its equity; on reported profit its 2024 RoTE is ${kv('Alpha Bank',2024,'rote').toFixed(1)}%.`,
     `DTC share of CET1 matches the banks' own disclosures: Alpha ${dtcA.toFixed(1)}% vs 49.2% reported, Eurobank ${dtcE.toFixed(1)}% vs 36% reported (FY2024 reports).`,
     `ECB funding of the four banks: €${(fund(2022)/1000).toFixed(1)}bn at end-2022 and €${(fund(2023)/1000).toFixed(1)}bn at end-2023, against €35.4bn and €14.3bn for the whole Greek banking system (Piraeus FY2023 and FY2024 reports, p.12).`,
     `Sector NII 2024 = €${n24.toLocaleString('en',{maximumFractionDigits:0})}m; Alpha 2024 net profit = €${kv('Alpha Bank',2024,'net_profit').toFixed(0)}m, as printed on p.246 of its FY2024 report.`,

@@ -81,8 +81,8 @@ elif above:
     st.markdown(f"At a {coe:.2f}% cost of equity, all four banks earned more than the cost of equity in 2024.")
 else:
     st.markdown(f"At a {coe:.2f}% cost of equity, no bank earned more than the cost of equity in 2024.")
-st.caption("RoTE = net profit attributable / average tangible equity (equity attributable − AT1 − goodwill "
-           "and intangibles). AT1 coupons are not deducted from profit.")
+st.caption("RoTE = (net profit attributable − AT1 coupons) / average tangible equity (equity attributable − AT1 − "
+           "goodwill and intangibles). Banks' headline figures often use normalised profit; see Methodology.")
 
 st.divider()
 

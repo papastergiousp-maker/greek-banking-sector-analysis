@@ -46,9 +46,9 @@ The spoken text is about 380 words, so there is room for the clicks.
 
 **Switch to the notebook `04_nii_rate_volume_walk.ipynb`, then to `05_earnings_quality.ipynb`.**
 
-> "Here is the NII walk. In 2023, wider margins added €2,891m to sector NII. That is the rate effect.
-> In 2024 NII rose by only €497m: €270m from rate and €225m from volume.
-> Eurobank had €265m of volume after it consolidated Hellenic Bank from 30 June 2024.
+> "Here is the NII walk. In 2023, wider margins added €2,862m to sector NII. That is the rate effect.
+> In 2024 NII rose by only €497m: €157m from rate and €337m from volume.
+> Eurobank had €302m of volume after it consolidated Hellenic Bank from 30 June 2024.
 > One more point: 2022 profit included one-offs. On underlying figures,
 > 2023 profit rose about 42%, not fell 3.5%."
 
@@ -61,7 +61,7 @@ The spoken text is about 380 words, so there is room for the clicks.
 **Switch to the Streamlit app.**
 
 > "Back in the app, Bank Deep Dive shows eight KPI cards for each bank.
-> RoTE is return on tangible equity.
+> RoTE is return on tangible equity, after AT1 coupons.
 > On Investment Thesis I move the cost of equity from 10% to 9% and the justified P/TBV of each bank updates.
 > There are no market prices and no ratings. It is not investment advice."
 
@@ -89,7 +89,7 @@ The spoken text is about 380 words, so there is room for the clicks.
 **Switch to Forecast and Stress, Stress Test tab, then the Sensitivity tab.**
 
 > "This is a one-year stress test: cost of risk up 200 basis points, loans down 15%, NIM down 50 basis points.
-> Three banks stay profitable. Alpha loses €118m.
+> Three banks stay profitable. Alpha loses €110m.
 > Alpha could absorb 209 basis points of extra cost of risk before a pre-tax loss.
 > The other three could absorb 353 to 420.
 > In the heatmap, the amber box is the default shock."
